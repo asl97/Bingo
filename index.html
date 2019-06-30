@@ -1,0 +1,396 @@
+<html>
+<body>
+
+    <style>
+        body {
+            display: flex;
+            place-content: center;
+        }
+        #amount_wrapper {
+            display: flex;
+            flex-direction: column;
+            place-items: center;
+        }
+        #start_button{
+            margin-top: 2vw;
+            font-size: 5vw;
+        }
+        #content_wrapper {
+            display: none;
+            flex-direction: column;
+            text-align: center;
+            width: 60%;
+            font-size: 5vw;
+        }
+        #content {
+            display:table;
+            width: 100%;
+            font-size: 2vw;
+            border-collapse: collapse;
+            border: 1px solid black;
+            text-align: center;
+        }
+        #number_display {
+            margin: 0;
+        }
+        .top {
+            display:flex;
+            position: absolute;
+            top: 0;
+        }
+        .top > span {
+            padding: 1vh;
+            border-bottom: 1px solid black;
+        }
+        .left {
+            left: 0;
+        }
+        .left > span {
+            border-right: 1px solid black;
+        }
+        .right {
+            right: 0;
+        }
+        .right > span {
+            border-left: 1px solid black;
+        }
+        .table_row {
+            display: table-row;
+            border: 1px solid black;
+        }
+        .table_cell {
+            display: table-cell;
+            border: 1px solid black;
+        }
+        .chosen {
+            background-color: lightgreen;
+        }
+        .number_input_icon {
+            width: 10vw;
+        }
+        .number_input {
+            font-size: 10vw;
+            width: 1em;
+        }
+        .row {
+            display: flex;
+        }
+    </style>
+
+    <div class='top left'>
+        <span id='reset_button'>reset</span>
+        <span id='change_amount'>change amount</span>
+    </div>
+
+    <div class='top right'>
+        <span id='mute_button'>mute</span>
+        <span id='fullscreen'>fullscreen</span>
+    </div>
+
+    <div id='amount_wrapper'>
+        <h1>Bingo Number Roller Caller</h1>
+        <div id='amount_input'></div>
+        <button id='start_button'>Start!</button>
+    </div>
+
+    <div id='content_wrapper'>
+        <h1 id="number_display">Click</h1>
+        <div id="content"></div>
+    </div>
+
+    <script>
+        function create_svg_icon(text, y){
+            let svg = document.createElementNS("http://www.w3.org/2000/svg", "svg")
+            svg.setAttribute('viewBox', '0 0 16 8');
+
+            let text_element = document.createElementNS("http://www.w3.org/2000/svg", "text")
+            text_element.setAttribute('x','0');
+            text_element.setAttribute('y',y);
+            text_element.textContent = text;
+
+            svg.appendChild(text_element);
+            return svg
+        }
+
+        function shuffle(array) {
+            let currentIndex = array.length, temporaryValue, randomIndex;
+
+            // While there remain elements to shuffle...
+            while (0 !== currentIndex) {
+            // Pick a remaining element...
+                randomIndex = Math.floor(Math.random() * currentIndex);
+                currentIndex --;
+
+                // And swap it with the current element.
+                temporaryValue = array[currentIndex];
+                array[currentIndex] = array[randomIndex];
+                array[randomIndex] = temporaryValue;
+            }
+        }
+
+        class SpeechQueue {
+            constructor(){
+                this._queue = [];
+                this.speaking = false;
+            }
+
+            queue(text){
+                this._queue.unshift(text);
+                this.speak();
+            }
+
+            speak(){
+                if (this.speaking || !this._queue.length) return
+                this.speaking = true;
+                let text = this._queue.pop();
+                let utter = new SpeechSynthesisUtterance(text);
+                utter.onend = ()=>{
+                    setTimeout(()=>{
+                        this.speaking = false;
+                        this.speak();
+                    }, 300)
+                }
+                speechSynthesis.speak(utter);
+            }
+
+            cancel(){
+                this._queue.length = 0;
+                speechSynthesis.cancel();
+            }
+        }
+
+       speechqueue = new SpeechQueue();
+
+        class Roll {
+            constructor(bingo, number_elements){
+                this.bingo = bingo;
+                this.end_roll_time;
+                shuffle(number_elements);
+                this.numbers = number_elements;
+                this.spinning = false;
+            }
+
+            animated_roll(){
+                if (!this.numbers.length) return
+
+                let number;
+                if (performance.now() < this.end_roll_time){
+                    let index = Math.floor(Math.random() * this.numbers.length);
+                    number = this.numbers[index].textContent;
+                    requestAnimationFrame(()=>this.animated_roll());
+                } else {
+                    let element = this.numbers.pop();
+                    number = element.textContent;
+                    element.classList.add('chosen');
+                    this.spinning = false;
+                    if (!bingo.muted) {
+                        number = parseInt(number).toString();
+                        for (let text of [number, ...number]){
+                            speechqueue.queue(text);
+                        }
+                    }
+                }
+
+                number_display = document.getElementById('number_display');
+                number_display.textContent = number;
+            }
+            start_animated_roll(){
+                if (this.spinning) return
+                this.spinning = true;
+                if (this.numbers.length > 1) this.end_roll_time = performance.now()+1500;
+                this.animated_roll();
+            }
+        }
+
+        class Bingo{
+            constructor(){
+                this.inputs = [];
+                this.muted = false;
+                this.roll_instance;
+                this.init_ui()
+            }
+
+            bind_input_handler(up, input, down){
+                // Set outer `last_input` to local next_input
+                // So it doesn't change for the local scope
+                let next_input = this.inputs[this.inputs.length-1];
+                let check_input = function(){
+                    // If less than 0, decrease next number
+                    while (input.value < 0) {
+                        input.value = +input.value + 10;
+                        if (next_input){
+                            next_input.stepDown()
+                            next_input.oninput()
+                        };
+                    }
+                    // If more than 9, increase next number
+                    while (input.value > 9) {
+                        input.value = +input.value - 10;
+                        if (next_input){
+                            next_input.stepUp();
+                            next_input.oninput()
+                        }
+                    }
+                }
+                input.oninput = check_input;
+                up.onclick = ()=>{input.stepUp(); input.oninput()};
+                down.onclick = ()=>{input.stepDown(); input.oninput()};
+
+                this.inputs.push(input);
+            }
+
+            create_input_number(){
+                let up, input, down;
+
+                up = create_svg_icon('︿', '6');
+                up.classList.add('number_input_icon');
+
+                input = document.createElement('input');
+                input.classList.add('number_input');
+                input.type='number';
+                input.value = 0;
+
+                down = create_svg_icon('﹀','15');
+                down.classList.add('number_input_icon');
+
+                this.bind_input_handler(up, input, down)
+
+                return [up, input, down];
+            }
+
+            generate_amount_input(){
+                let amount_input = document.getElementById('amount_input');
+
+                let columns = [];
+                let rows = [];
+
+                // Create the three row, up button row, input row, down button row
+                for (let i=0; i<3; i++){
+                    let row = document.createElement('div');
+                    row.classList.add('row');
+                    rows.push(row)
+                }
+
+                // create the amount of input wanted
+                let max_number = 999
+                let number_of_digit = Math.log10(max_number)+1|0
+                for (let i=0; i<number_of_digit; i++){
+                    let number_column = this.create_input_number();
+                    columns.push(number_column);
+                }
+
+                // columns to rows
+                // layman terms: for first row, append first item in columns, etc etc
+                for (let i=0; i<rows.length; i++){
+                    for (let column of columns){
+                        rows[i].appendChild(column[i])
+                    }
+                }
+
+                // Append each row to the amount input interface
+                for (let row of rows){
+                    amount_input.appendChild(row);
+                }
+            }
+
+            generate_numbers_display(numbers){
+                let content = document.getElementById('content')
+                content.innerHTML = '';
+                let number = 0 ;
+                let number_elements = [];
+                let number_length = Math.floor(Math.log10(numbers)) + 1;
+
+                while (number < numbers){
+                    let row = document.createElement('div')
+                    row.classList.add('table_row');
+                    for (let i=0; i<10; i++){
+                        number++;
+                        if (number > numbers) break;
+                        let span = document.createElement('span');
+                        span.textContent = number.toString().padStart(number_length, '0');
+                        span.classList.add('table_cell');
+                        row.appendChild(span);
+                        number_elements.push(span);
+                    }
+                    content.appendChild(row);
+                }
+
+                return number_elements;
+            }
+
+            get_input_number(){
+                let res = "";
+                for (let input of this.inputs){
+                    res += input.value;
+                }
+                return parseInt(res);
+            }
+
+            start(){
+                let number_elements = this.generate_numbers_display(this.get_input_number());
+                this.roll_instance = new Roll(this, number_elements);
+                let content = document.getElementById('content_wrapper');
+                content.style.display = 'flex';
+                let amount = document.getElementById('amount_wrapper');
+                amount.style.display = 'none';
+                let number_display = document.getElementById('number_display');
+                number_display.textContent = 'Click';
+            }
+
+            change_amount(){
+                let content = document.getElementById('content_wrapper');
+                content.style.display = 'none';
+                let amount = document.getElementById('amount_wrapper');
+                amount.style.display = 'flex';
+            }
+
+            mute(){
+                let mute_button = document.getElementById('mute_button');
+                if (!this.muted){
+                    speechqueue.cancel();
+                    this.muted = true;
+                    mute_button.style['background-color'] = 'red';
+                } else {
+                    this.muted = false;
+                    mute_button.style['background-color'] = '';
+                }
+            }
+
+            init_ui(){
+                let mute_button = document.getElementById('mute_button');
+                mute_button.onclick = ()=>this.mute();
+
+                let fullscreen_button = document.getElementById('fullscreen');
+                fullscreen_button.onclick = function(){
+                    if (document.fullscreenElement) {
+                        document.exitFullscreen();
+                    } else {
+                        document.documentElement.requestFullscreen();
+                    }
+                }
+
+                this.generate_amount_input();
+                let last_input = this.inputs[this.inputs.length-1];
+                last_input.value = 90;
+                last_input.oninput();
+
+                let start_button = document.getElementById('start_button');
+                start_button.onclick = ()=>this.start();
+
+                let reset_button = document.getElementById('reset_button');
+                reset_button.onclick = ()=>this.start();
+
+                let change_amount_button = document.getElementById('change_amount');
+                change_amount_button.onclick = ()=>this.change_amount();
+
+                let roll_button = document.getElementById('number_display');
+                roll_button.onclick = ()=>this.roll_instance.start_animated_roll();
+            }
+        }
+
+        bingo = new Bingo();
+
+    </script>
+
+</body>
+</html>
