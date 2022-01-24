@@ -65,11 +65,17 @@
         .chosen {
             background-color: lightgreen;
         }
-        .number_input_icon {
+        .number_input_icon_top {
             line-height: 0.5;
-            margin: 0;            
+            transform: translateY(-0.5em);
+            margin: 0;
         }
-        #amount_input {
+        .number_input_icon_bottom {
+            line-height: 0.5;
+            transform: translateY(0.5em);
+            margin: 0;
+        }
+        .number_input {
             font-size: 10vw;
             width: 1em;
         }
@@ -103,7 +109,7 @@
         function create_icon(text){
             let text_element = document.createElement('p')
             text_element.textContent = text
-            text_element.classList.add('number_input_icon')
+            text_element.classList.add('number_input')
 
             return text_element
         }
@@ -239,6 +245,7 @@
                 let up, input, down;
 
                 up = create_icon('︿');
+                up.classList.add('number_input_icon_top')
 
                 input = document.createElement('input');
                 input.classList.add('number_input');
@@ -246,6 +253,7 @@
                 input.value = 0;
 
                 down = create_icon('﹀');
+                down.classList.add('number_input_icon_bottom')
 
                 this.bind_input_handler(up, input, down)
 
