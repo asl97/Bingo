@@ -66,9 +66,10 @@
             background-color: lightgreen;
         }
         .number_input_icon {
-            width: 10vw;
+            line-height: 0.5;
+            margin: 0;            
         }
-        .number_input {
+        #amount_input {
             font-size: 10vw;
             width: 1em;
         }
@@ -99,17 +100,12 @@
     </div>
 
     <script>
-        function create_svg_icon(text, y){
-            let svg = document.createElementNS("http://www.w3.org/2000/svg", "svg")
-            svg.setAttribute('viewBox', '0 0 16 8');
+        function create_icon(text){
+            let text_element = document.createElement('p')
+            text_element.textContent = text
+            text_element.classList.add('number_input_icon')
 
-            let text_element = document.createElementNS("http://www.w3.org/2000/svg", "text")
-            text_element.setAttribute('x','0');
-            text_element.setAttribute('y',y);
-            text_element.textContent = text;
-
-            svg.appendChild(text_element);
-            return svg
+            return text_element
         }
 
         function shuffle(array) {
@@ -242,16 +238,14 @@
             create_input_number(){
                 let up, input, down;
 
-                up = create_svg_icon('︿', '6');
-                up.classList.add('number_input_icon');
+                up = create_icon('︿');
 
                 input = document.createElement('input');
                 input.classList.add('number_input');
                 input.type='number';
                 input.value = 0;
 
-                down = create_svg_icon('﹀','15');
-                down.classList.add('number_input_icon');
+                down = create_icon('﹀');
 
                 this.bind_input_handler(up, input, down)
 
