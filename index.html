@@ -159,7 +159,7 @@
             }
         }
 
-       speechqueue = new SpeechQueue();
+        let speechqueue = new SpeechQueue();
 
         class Roll {
             constructor(bingo, number_elements){
@@ -171,7 +171,10 @@
             }
 
             animated_roll(){
-                if (!this.numbers.length) return
+                if (!this.numbers.length){
+                    this.spinning = false;
+                    return
+                }
 
                 let number;
                 if (performance.now() < this.end_roll_time){
