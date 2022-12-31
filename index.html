@@ -170,6 +170,31 @@
                 this.spinning = false;
             }
 
+            unroll_element(element){
+                element.classList.remove("chosen");
+                this.numbers.push(element);
+                shuffle(this.numbers);
+            }
+
+            roll(number, muted){
+                let number_display = document.getElementById('number_display');
+                number_display.textContent = number;
+
+                if (!muted) {
+                    number = parseInt(number).toString();
+                    for (let text of [number, ...number]){
+                        speechqueue.queue(text);
+                    }
+                }
+            }
+
+            roll_element(element){
+                element.classList.add('chosen');
+                this.numbers.splice(this.numbers.indexOf(element), 1);
+                let number = element.textContent;
+                this.roll(number, this.bingo.muted);
+            }
+
             animated_roll(){
                 if (!this.numbers.length){
                     this.spinning = false;
@@ -180,22 +205,15 @@
                 if (performance.now() < this.end_roll_time){
                     let index = Math.floor(Math.random() * this.numbers.length);
                     number = this.numbers[index].textContent;
+                    this.roll(number, true);
                     requestAnimationFrame(()=>this.animated_roll());
                 } else {
-                    let element = this.numbers.pop();
-                    number = element.textContent;
-                    element.classList.add('chosen');
+                    let element = this.numbers[0];
                     this.spinning = false;
-                    if (!bingo.muted) {
-                        number = parseInt(number).toString();
-                        for (let text of [number, ...number]){
-                            speechqueue.queue(text);
-                        }
-                    }
+                    this.roll_element(element);
                 }
 
-                let number_display = document.getElementById('number_display');
-                number_display.textContent = number;
+
             }
             start_animated_roll(){
                 if (this.spinning) return
@@ -312,6 +330,13 @@
                         let span = document.createElement('span');
                         span.textContent = number.toString().padStart(number_length, '0');
                         span.classList.add('table_cell');
+                        span.onclick = ()=>{
+                            if (span.classList.contains("chosen")){
+                                this.roll_instance.unroll_element(span);
+                            } else {
+                                this.roll_instance.roll_element(span);
+                            }
+                        };
                         row.appendChild(span);
                         number_elements.push(span);
                     }
