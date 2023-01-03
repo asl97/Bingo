@@ -1,7 +1,7 @@
 const cacheName = 'bingo-cache';
 const filesToCache = [
-  '/',
-  '/index.html',
+  './',
+  './index.html',
 ]; 
 
 // the event handler for the activate event
