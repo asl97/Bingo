@@ -418,6 +418,9 @@
 
         bingo = new Bingo();
 
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register("sw-offline.js");
+        }
     </script>
 
 </body>
