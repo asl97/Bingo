@@ -99,16 +99,17 @@
     </div>
 
     <script>
-        function create_svg_icon(text, y){
+        function create_svg_icon(size, path){
             let svg = document.createElementNS("http://www.w3.org/2000/svg", "svg")
-            svg.setAttribute('viewBox', '0 0 16 8');
+            svg.setAttribute('viewBox', size);
 
-            let text_element = document.createElementNS("http://www.w3.org/2000/svg", "text")
-            text_element.setAttribute('x','0');
-            text_element.setAttribute('y',y);
-            text_element.textContent = text;
+            let path_element = document.createElementNS("http://www.w3.org/2000/svg", "path")
+            path_element.setAttribute('d',path);
+            path_element.setAttribute('stroke','black')
+            path_element.setAttribute('fill', 'none')
+            path_element.setAttribute('stroke-linejoin', 'round')
 
-            svg.appendChild(text_element);
+            svg.appendChild(path_element);
             return svg
         }
 
@@ -263,7 +264,8 @@
             create_input_number(){
                 let up, input, down;
 
-                up = create_svg_icon('︿', '6');
+                up = create_svg_icon('0 0 16 8', 'M1,7 L8,1 L15,7'); //'︿'
+
                 up.classList.add('number_input_icon');
 
                 input = document.createElement('input');
@@ -271,7 +273,7 @@
                 input.type='number';
                 input.value = 0;
 
-                down = create_svg_icon('﹀','15');
+                down = create_svg_icon('0 0 16 8', 'M1,1 L8,7 L15,1')/ //'﹀'
                 down.classList.add('number_input_icon');
 
                 this.bind_input_handler(up, input, down)
