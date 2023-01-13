@@ -1,7 +1,7 @@
-const cacheName = 'bingo-cache-v0.2';
+const cacheName = 'bingo-cache-v0.3';
 const filesToCache = [
   './',
-  './LICENSE',
+  './LICENSE.txt',
   './README.txt',
   './index.html',
 ]
