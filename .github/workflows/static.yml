@@ -4,7 +4,7 @@ name: Deploy static content to Pages
 on:
   # Runs on pushes targeting the default branch
   push:
-    branches: ["master"]
+    branches: ["master", "dev"]
 
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
@@ -28,8 +28,15 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
+      - name: Checkout Master
         uses: actions/checkout@v3
+        with:
+          ref: master
+      - name: Checkout Dev Branch
+        uses: actions/checkout@v3
+        with:
+          path: branch/dev
+          ref: dev
       - name: Setup Pages
         uses: actions/configure-pages@v2
       - name: Upload artifact
