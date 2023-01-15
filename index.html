@@ -230,6 +230,7 @@
                 this.inputs = [];
                 this.muted = false;
                 this.roll_instance;
+                this.url = new URL(window.location.href);
                 this.init_ui()
             }
 
@@ -358,6 +359,8 @@
             }
 
             start(){
+                this.url.searchParams.set("amount", this.get_input_number());
+                window.history.replaceState('', '', this.url.href)
                 let number_elements = this.generate_numbers_display(this.get_input_number());
                 this.roll_instance = new Roll(this, number_elements);
                 let content = document.getElementById('content_wrapper');
@@ -402,7 +405,7 @@
 
                 this.generate_amount_input();
                 let last_input = this.inputs[this.inputs.length-1];
-                last_input.value = 90;
+                last_input.value = this.url.searchParams.get("amount") || 90;
                 last_input.oninput();
 
                 let start_button = document.getElementById('start_button');
