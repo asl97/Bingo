@@ -66,9 +66,6 @@
         .chosen {
             background-color: lightgreen;
         }
-        .number_input_icon {
-            width: 10vw;
-        }
         .number_input {
             font-size: 10vw;
             width: 1em;
@@ -268,15 +265,12 @@
 
                 up = create_svg_icon('0 0 16 8', 'M1,7 L8,1 L15,7'); //'︿'
 
-                up.classList.add('number_input_icon');
-
                 input = document.createElement('input');
                 input.classList.add('number_input');
                 input.type='number';
                 input.value = 0;
 
                 down = create_svg_icon('0 0 16 8', 'M1,1 L8,7 L15,1'); //'﹀'
-                down.classList.add('number_input_icon');
 
                 this.bind_input_handler(up, input, down)
 
