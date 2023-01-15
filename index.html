@@ -1,0 +1,853 @@
+<!DOCTYPE html>
+<html>
+<body>
+
+    <style>
+        body {
+            display: flex;
+            place-content: center;
+        }
+        body[data-view="bingo spinner"] #bingo_wrapper,
+        body[data-view="amount selector"] #amount_wrapper,
+        body[data-view="cards editor"] #card_editor_wrapper {
+            display: flex;
+        }
+        body[data-view="bingo spinner"] :is(#amount_wrapper,#card_editor_wrapper, .card_control),
+        body[data-view="amount selector"] :is(#bingo_wrapper, #card_editor_wrapper),
+        body[data-view="cards editor"] :is(#amount_wrapper, #bingo_wrapper) {
+            display: none;
+        }
+
+        #amount_wrapper, #bingo_wrapper, #card_editor_wrapper {
+            flex-direction: column;
+            place-items: center;
+            text-align: center;
+            width: 60%;
+        }
+
+        #bingo_wrapper {
+            font-size: 5vw;
+        }
+
+        #start_button{
+            margin-top: 2vw;
+            font-size: 5vw;
+        }
+
+        #content, #number_selector, #active_card {
+            display:table;
+            width: 100%;
+            font-size: 2vw;
+            border-collapse: collapse;
+            border: 1px solid black;
+            text-align: center;
+        }
+        #number_display {
+            margin: 0;
+        }
+        .top {
+            display:flex;
+            position: absolute;
+            top: 0;
+        }
+        .top span {
+            padding: 1vh;
+            border-bottom: 1px solid black;
+        }
+        .left {
+            left: 0;
+            flex-direction: column;
+        }
+        .left span {
+            border-right: 1px solid black;
+        }
+        .left > * {
+            display: flex;
+        }
+        .right {
+            right: 0;
+        }
+        .right > span {
+            border-left: 1px solid black;
+        }
+        .table_row {
+            display: table-row;
+            border: 1px solid black;
+        }
+        .table_cell {
+            display: table-cell;
+            border: 1px solid black;
+            padding: 0;
+            vertical-align: middle;
+        }
+        .chosen {
+            background-color: lightgreen;
+        }
+        .number_input {
+            font-size: 10vw;
+            width: 1em;
+        }
+        .row {
+            display: flex;
+        }
+
+        #cards_wrapper,
+        #bingo_wrapper .add_card {
+            display: none;
+        }
+
+        #card_editor_wrapper > #cards_wrapper,
+        #bingo_wrapper > #cards_wrapper {
+            display: flex;
+        }
+
+        #active_card .table_cell > input {
+            width: 5vw;
+            border: 0;
+            padding: 0;
+            outline: none;
+            font-size: 2vw;
+            text-align: center;
+        }
+
+        #card_editor_wrapper > * {
+            margin: 1vw;
+        }
+
+        #card_editor {
+            display: flex;
+        }
+        .card_button {
+            display: flex;
+            place-content: center;
+            border: black solid;
+            margin: 0 1vw;
+            width: 5vw;
+        }
+
+        .card {
+            border: black solid;
+            margin: 1vw;
+            height: 18vw;
+            width: 18vw;
+            display:table;
+            text-align: center;
+            font-size: 2vw;
+        }
+
+        .card_control {
+            display: flex;
+            place-content: center;
+        }
+
+        .card_control > .card_button {
+            margin: 0 0.2vw;
+        }
+
+        #card_template {
+            display: none;
+        }
+    </style>
+
+    <div class='top left'>
+        <div>
+            <span id='reset_button'>reset</span>
+            <span id='change_amount'>change amount</span>
+        </div>
+        <div>
+            <span id='spinner_button'>spinner</span>
+            <span id='cards_editor_button'>bingo card</span>
+        </div>
+    </div>
+
+    <div class='top right'>
+        <span id='mute_button'>mute</span>
+        <span id='fullscreen'>fullscreen</span>
+    </div>
+
+    <div id='amount_wrapper'>
+        <h1>Bingo Number Roller Caller</h1>
+        <div id='amount_input'></div>
+        <button id='start_button'>Start!</button>
+    </div>
+
+    <div id='bingo_wrapper'>
+        <h1 id="number_display">Click</h1>
+        <div id="content"></div>
+    </div>
+
+    <div id='card_editor_wrapper'>
+        <h1>Card Editor</h1>
+        <div>
+            <div id='card_editor'>
+                <div id='clear_card_editor' class='card_button'>
+                    <svg viewBox='0 0 16 16'>
+                        <path d='M1,8 L15,8' stroke='black' fill='none'></path>
+                    </svg>
+                </div>
+                <div id='active_card'></div>
+                <div id='add_card_editor' class='card_button'>
+                    <svg viewBox='0 0 16 16'>
+                        <path d='M1,8 L15,8' stroke='black' fill='none'></path>
+                        <path d='M8,1 L8,15' stroke='black' fill='none'></path>
+                    </svg>
+                </div>
+            </div>
+        </div>
+        <div id='number_selector'></div>
+    </div>
+
+    <div id='cards_wrapper'>
+    </div>
+
+    <div id='card_template'>
+        <div class='card_control'>
+            <div class='card_button move_card_left'>
+                <svg viewBox='0 0 16 16'>
+                    <path d='M14,2 L2,8 L 14,14' stroke='black' fill='none'></path>
+                </svg>
+            </div>
+            <div>
+                <div class='card_button edit_card'>
+                    <svg viewBox='0 0 16 8'>
+                        <path d='M2,6 L8,2 L14,6' stroke='black' fill='none'></path>
+                    </svg>
+                </div>
+                <div class='card_button delete_card'>
+                    <svg viewBox='0 0 16 8'>
+                        <path d='M2,2 L14,6' stroke='black' fill='none'></path>
+                        <path d='M2,6 L14,2' stroke='black' fill='none'></path>
+                    </svg>
+                </div>
+            </div>
+            <div class='card_button move_card_right'>
+                <svg viewBox='0 0 16 16'>
+                    <path d='M2,2 L14,8 L2,14' stroke='black' fill='none'></path>
+                </svg>
+            </div>
+        </div>
+    </div>
+
+    <dialog id='alert'>
+        <p></p>
+    </dialog>
+
+    <script>
+        const View_states = {
+            Bingo: 'bingo spinner',
+            Amount: 'amount selector',
+            Cards: 'cards editor'
+        };
+        Object.freeze(View_states);
+
+        function create_svg_icon(size, path){
+            let svg = document.createElementNS("http://www.w3.org/2000/svg", "svg")
+            svg.setAttribute('viewBox', size);
+
+            let path_element = document.createElementNS("http://www.w3.org/2000/svg", "path")
+            path_element.setAttribute('d',path);
+            path_element.setAttribute('stroke','black')
+            path_element.setAttribute('fill', 'none')
+            path_element.setAttribute('stroke-linejoin', 'round')
+
+            svg.appendChild(path_element);
+            return svg
+        }
+
+        function shuffle(array) {
+            let currentIndex = array.length, temporaryValue, randomIndex;
+
+            // While there remain elements to shuffle...
+            while (0 !== currentIndex) {
+            // Pick a remaining element...
+                randomIndex = Math.floor(Math.random() * currentIndex);
+                currentIndex --;
+
+                // And swap it with the current element.
+                temporaryValue = array[currentIndex];
+                array[currentIndex] = array[randomIndex];
+                array[randomIndex] = temporaryValue;
+            }
+        }
+
+        class SpeechQueue {
+            constructor(){
+                this._queue = [];
+                this.speaking = false;
+            }
+
+            queue(text){
+                this._queue.unshift(text);
+                this.speak();
+            }
+
+            speak(){
+                if (this.speaking || !this._queue.length) return
+                this.speaking = true;
+                let text = this._queue.pop();
+                let utter = new SpeechSynthesisUtterance(text);
+                utter.onend = ()=>{
+                    setTimeout(()=>{
+                        this.speaking = false;
+                        this.speak();
+                    }, 300)
+                }
+                speechSynthesis.speak(utter);
+            }
+
+            cancel(){
+                this._queue.length = 0;
+                speechSynthesis.cancel();
+            }
+        }
+
+        let speechqueue = new SpeechQueue();
+
+        class Roll {
+            constructor(bingo, number_elements){
+                this.bingo = bingo;
+                this.end_roll_time;
+                shuffle(number_elements);
+                this.numbers = number_elements;
+                this.spinning = false;
+            }
+
+            unroll_element(element){
+                element.classList.remove("chosen");
+                let number = element.textContent;
+                this.bingo.cards.unroll(number);
+                this.numbers.push(element);
+                shuffle(this.numbers);
+            }
+
+            roll(number, muted){
+                let number_display = document.getElementById('number_display');
+                number_display.textContent = number;
+
+                if (!muted) {
+                    number = parseInt(number).toString();
+                    for (let text of [number, ...number]){
+                        speechqueue.queue(text);
+                    }
+                }
+            }
+
+            roll_element(element){
+                element.classList.add('chosen');
+                this.numbers.splice(this.numbers.indexOf(element), 1);
+                let number = element.textContent;
+                this.roll(number, this.bingo.muted);
+                this.bingo.cards.roll(number);
+            }
+
+            animated_roll(){
+                if (!this.numbers.length){
+                    this.spinning = false;
+                    return
+                }
+
+                let number;
+                if (performance.now() < this.end_roll_time){
+                    let index = Math.floor(Math.random() * this.numbers.length);
+                    number = this.numbers[index].textContent;
+                    this.roll(number, true);
+                    requestAnimationFrame(()=>this.animated_roll());
+                } else {
+                    let element = this.numbers[0];
+                    this.spinning = false;
+                    this.roll_element(element);
+                }
+
+
+            }
+            start_animated_roll(){
+                if (this.spinning) return
+                this.spinning = true;
+                if (this.numbers.length > 1) this.end_roll_time = performance.now()+1500;
+                this.animated_roll();
+            }
+        }
+
+        class Bingo{
+            constructor(){
+                this.inputs = [];
+                this.muted = false;
+                this.roll_instance;
+                this.url = new URL(window.location.href);
+                this.cards = new Cards(this);
+                this.cards.observe();
+                this.init_ui()
+                this.post_init_ui();
+            }
+
+            bind_input_handler(up, input, down){
+                // Set outer `last_input` to local next_input
+                // So it doesn't change for the local scope
+                let next_input = this.inputs[this.inputs.length-1];
+                let check_input = function(){
+                    // If less than 0, decrease next number
+                    while (input.value < 0) {
+                        input.value = +input.value + 10;
+                        if (next_input){
+                            next_input.stepDown()
+                            next_input.oninput()
+                        };
+                    }
+                    // If more than 9, increase next number
+                    while (input.value > 9) {
+                        input.value = +input.value - 10;
+                        if (next_input){
+                            next_input.stepUp();
+                            next_input.oninput()
+                        }
+                    }
+                }
+                input.oninput = check_input;
+                up.onclick = ()=>{input.stepUp(); input.oninput()};
+                down.onclick = ()=>{input.stepDown(); input.oninput()};
+
+                this.inputs.push(input);
+            }
+
+            create_input_number(){
+                let up, input, down;
+
+                up = create_svg_icon('0 0 16 8', 'M1,7 L8,1 L15,7'); //'︿'
+
+                input = document.createElement('input');
+                input.classList.add('number_input');
+                input.type='number';
+                input.value = 0;
+
+                down = create_svg_icon('0 0 16 8', 'M1,1 L8,7 L15,1'); //'﹀'
+
+                this.bind_input_handler(up, input, down)
+
+                return [up, input, down];
+            }
+
+            generate_amount_input(){
+                let amount_input = document.getElementById('amount_input');
+
+                let columns = [];
+                let rows = [];
+
+                // Create the three row, up button row, input row, down button row
+                for (let i=0; i<3; i++){
+                    let row = document.createElement('div');
+                    row.classList.add('row');
+                    rows.push(row)
+                }
+
+                // create the amount of input wanted
+                let max_number = 999
+                let number_of_digit = Math.log10(max_number)+1|0
+                for (let i=0; i<number_of_digit; i++){
+                    let number_column = this.create_input_number();
+                    columns.push(number_column);
+                }
+
+                // columns to rows
+                // layman terms: for first row, append first item in columns, etc etc
+                for (let i=0; i<rows.length; i++){
+                    for (let column of columns){
+                        rows[i].appendChild(column[i])
+                    }
+                }
+
+                // Append each row to the amount input interface
+                for (let row of rows){
+                    amount_input.appendChild(row);
+                }
+            }
+
+            generate_numbers_display(numbers){
+                let content = document.getElementById('content')
+                content.innerHTML = '';
+                let number = 0 ;
+                let number_elements = [];
+                let number_length = Math.floor(Math.log10(numbers)) + 1;
+
+                while (number < numbers){
+                    let row = document.createElement('div')
+                    row.classList.add('table_row');
+                    for (let i=0; i<10; i++){
+                        number++;
+                        if (number > numbers) break;
+                        let span = document.createElement('span');
+                        span.textContent = number.toString().padStart(number_length, '0');
+                        span.classList.add('table_cell');
+                        span.onclick = ()=>{
+                            if (span.classList.contains("chosen")){
+                                this.roll_instance.unroll_element(span);
+                            } else {
+                                this.roll_instance.roll_element(span);
+                            }
+                        };
+                        row.appendChild(span);
+                        number_elements.push(span);
+                    }
+                    content.appendChild(row);
+                }
+
+                return number_elements;
+            }
+
+            get_input_number(){
+                let res = "";
+                for (let input of this.inputs){
+                    res += input.value;
+                }
+                return parseInt(res);
+            }
+
+            update_url(){
+                this.url.searchParams.set("amount", this.get_input_number());
+                window.history.replaceState('', '', this.url.href);
+            }
+
+            start(){
+                this.update_url();
+                this.cards.reset();
+                let number_elements = this.generate_numbers_display(this.get_input_number());
+                this.roll_instance = new Roll(this, number_elements);
+                document.body.dataset.view=View_states.Bingo;
+                let number_display = document.getElementById('number_display');
+                number_display.textContent = 'Click';
+            }
+
+            change_amount(){
+                document.body.dataset.view=View_states.Amount;
+            }
+
+            cards_editor(){
+                this.update_url();
+                document.body.dataset.view=View_states.Cards;
+            }
+
+            bingo_spinner(){
+                document.body.dataset.view=View_states.Bingo;
+            }
+
+            mute(){
+                let mute_button = document.getElementById('mute_button');
+                if (!this.muted){
+                    speechqueue.cancel();
+                    this.muted = true;
+                    mute_button.style['background-color'] = 'red';
+                } else {
+                    this.muted = false;
+                    mute_button.style['background-color'] = '';
+                }
+            }
+
+            init_ui(){
+                let mute_button = document.getElementById('mute_button');
+                mute_button.onclick = ()=>this.mute();
+
+                let fullscreen_button = document.getElementById('fullscreen');
+                fullscreen_button.onclick = function(){
+                    if (document.fullscreenElement) {
+                        document.exitFullscreen();
+                    } else {
+                        document.documentElement.requestFullscreen();
+                    }
+                }
+
+                let alert = document.getElementById('alert');
+                alert.onclick = ()=>alert.close();
+
+                this.generate_amount_input();
+                let last_input = this.inputs[this.inputs.length-1];
+                last_input.value = this.url.searchParams.get("amount") || 90;
+                last_input.oninput();
+
+                let start_button = document.getElementById('start_button');
+                start_button.onclick = ()=>this.start();
+
+                let reset_button = document.getElementById('reset_button');
+                reset_button.onclick = ()=>this.start();
+
+                let change_amount_button = document.getElementById('change_amount');
+                change_amount_button.onclick = ()=>this.change_amount();
+
+                let cards_editor_button = document.getElementById('cards_editor_button');
+                cards_editor_button.onclick = ()=>this.cards_editor();
+
+                let spinner_button = document.getElementById('spinner_button');
+                spinner_button.onclick = ()=>this.bingo_spinner();
+
+                let roll_button = document.getElementById('number_display');
+                roll_button.onclick = ()=>this.roll_instance.start_animated_roll();
+            }
+
+            post_init_ui(){
+                this.start();
+                document.body.dataset.view=View_states.Amount;
+            }
+        }
+
+        class Cards{
+            constructor(bingo){
+                this.bingo = bingo;
+                this.width = 5;
+                this.height = 5;
+                this.slots = this.width*this.height;
+                this.init_ui();
+            }
+
+            generate_active_card(){
+                let active_card = document.getElementById('active_card');
+
+                for (let i=0; i<this.height; i++){
+                    let row = document.createElement('div');
+                    row.classList.add('table_row');
+                    for (let l=0; l<this.width; l++){
+                        let input_div = document.createElement('div');
+                        let input = document.createElement('input');
+                        input_div.appendChild(input);
+                        input_div.classList.add('table_cell');
+                        input_div.onclick = ()=>input.focus();
+                        row.appendChild(input_div);
+                    }
+                    active_card.appendChild(row);
+                }
+            }
+
+            clear_active_card(){
+                let active_card = document.getElementById('active_card');
+                for (let input of active_card.getElementsByTagName('input')){
+                        input.value = '';
+                }
+            }
+
+            load_card(card){
+                let alert = document.getElementById('alert');
+                let active_card = document.getElementById('active_card');
+                let inputs = active_card.getElementsByTagName('input');
+                for (let input of inputs){
+                        if (input.value !== ''){
+                            alert.getElementsByTagName('p')[0].textContent = "Card editor is not empty";
+                            alert.showModal();
+                            return
+                        }
+                }
+
+                let index = 0;
+                for (let span of card.getElementsByTagName('span')){
+                    inputs[index].value = span.textContent;
+                    index++
+                }
+
+                card.parentElement.remove();
+            }
+
+            generate_card(){
+                let active_card = document.getElementById('active_card');
+                let alert = document.getElementById('alert');
+                let card_template = document.getElementById('card_template');
+
+                let card = document.createElement('div');
+                card.classList.add('card');
+
+                let index = 0;
+                let inputs = active_card.getElementsByTagName('input');
+                for (let i=0; i<this.height; i++){
+                    let row = document.createElement('div');
+                    row.classList.add('table_row');
+                    for (let l=0; l<this.width; l++){
+                        let span = document.createElement('span');
+                        let value = inputs[index].value;
+                        if (value === '' || value === '*'){
+                            span.textContent = '*';
+                        } else if (!isNaN(parseInt(value))) {
+                            if (parseInt(value) <= 0){
+                                alert.getElementsByTagName('p')[0].textContent = "Card editor contains a number less than 1";
+                                alert.showModal();
+                                return
+                            } else if (parseInt(value) > this.bingo.get_input_number()){
+                                alert.getElementsByTagName('p')[0].textContent = "Card editor contains a number greater than "+this.bingo.get_input_number();
+                                alert.showModal();
+                                return
+                            } else {
+                                span.textContent = value;
+                            }
+                        } else {
+                            alert.getElementsByTagName('p')[0].textContent = "Card editor contains non number";
+                            alert.showModal();
+                            return
+                        }
+                        
+                        span.onclick = ()=>this.click_roll(span);
+                        span.classList.add('table_cell');
+                        row.appendChild(span);
+                        index++;
+                    }
+                    card.appendChild(row);
+                }
+                let card_wrapper = card_template.cloneNode(true);
+                card_wrapper.removeAttribute('id');
+                card_wrapper.appendChild(card);
+
+                let move_left = card_wrapper.getElementsByClassName('move_card_left')[0];
+                move_left.onclick = ()=>card_wrapper.parentElement.insertBefore(card_wrapper, card_wrapper.previousSibling);
+                let move_right = card_wrapper.getElementsByClassName('move_card_right')[0];
+                move_right.onclick = ()=>{
+                    if (card_wrapper.nextSibling) {
+                        card_wrapper.parentElement.insertBefore(card_wrapper, card_wrapper.nextSibling.nextSibling);
+                    } else {
+                        card_wrapper.parentElement.prepend(card_wrapper);
+                    }
+                    
+                };
+                let edit_button = card_wrapper.getElementsByClassName('edit_card')[0];
+                edit_button.onclick = ()=>this.load_card(card);
+                let delete_button = card_wrapper.getElementsByClassName('delete_card')[0];
+                delete_button.onclick = ()=>card_wrapper.remove();
+
+                return card_wrapper;
+            }
+
+            mark_rolled_number(card){
+                let content = document.getElementById('content');
+                let rolled = new Set();
+                rolled.add("*");
+                for (let chosen of content.getElementsByClassName('chosen')){
+                    rolled.add(parseInt(chosen.textContent));
+                }
+
+                for (let slot of card.getElementsByTagName('span')){
+                    let value = !isNaN(parseInt(slot.textContent)) ? parseInt(slot.textContent) : slot.textContent;
+                    if (rolled.has(value)){
+                        slot.classList.add('chosen');
+                    }
+                }
+            }
+
+            add_card(){
+                let cards = document.getElementById('cards_wrapper');
+                let card_wrapper = this.generate_card();
+                this.mark_rolled_number(card_wrapper);
+
+                cards.appendChild(card_wrapper);
+                this.clear_active_card();
+            }
+
+            init_ui(){
+                this.generate_active_card();
+
+                let active_card = document.getElementById('active_card');
+
+                let clear_button = document.getElementById("clear_card_editor");
+                clear_button.onclick = ()=>this.clear_active_card();
+
+                let add_button = document.getElementById('add_card_editor');
+                add_button.onclick = ()=>this.add_card();
+            }
+
+            update_ui(){
+                let content = document.getElementById('number_selector');
+                content.innerHTML = '';
+                let number = 0;
+                let numbers = this.bingo.get_input_number();
+                let number_elements = [];
+                let number_length = Math.floor(Math.log10(numbers)) + 1;
+
+                while (number < numbers){
+                    let row = document.createElement('div');
+                    row.classList.add('table_row');
+                    for (let i=0; i<10; i++){
+                        number++;
+                        if (number > numbers) break;
+                        let span = document.createElement('span');
+                        span.textContent = number.toString().padStart(number_length, '0');
+                        span.classList.add('table_cell');
+                        // allow clicking number to fill the next empty slot
+                        span.onclick = ()=>{
+                            let active_card = document.getElementById('active_card');
+                            for (let input of active_card.getElementsByTagName('input')){
+                                if (input.value === ''){
+                                    input.value = span.textContent;
+                                    return
+                                }
+                            }
+                        };
+                        row.appendChild(span);
+                        number_elements.push(span);
+                    }
+                    content.appendChild(row);
+                }
+
+                return number_elements;
+            }
+
+            reset(){
+                let cards = document.getElementById('cards_wrapper');
+                let slots = cards.getElementsByClassName('chosen');
+                while (slots.length){
+                    slots[0].classList.remove('chosen');
+                }
+            }
+
+            unroll(number){
+                let cards = document.getElementById('cards_wrapper');
+                for (let slot of cards.getElementsByTagName('span')){
+                    if (parseInt(slot.textContent) == parseInt(number)){
+                        slot.classList.remove('chosen');
+                    }
+                }
+            }
+
+            roll(number){
+                let cards = document.getElementById('cards_wrapper');
+                for (let slot of cards.getElementsByTagName('span')){
+                    if (parseInt(slot.textContent) == parseInt(number)){
+                        slot.classList.add('chosen');
+                    }
+                }
+            }
+
+            click_roll(element){
+                if (isNaN(parseInt(element.textContent))) return;
+                for (let span of document.getElementById('content').getElementsByTagName('span')){
+                    if (parseInt(span.textContent) == parseInt(element.textContent)){
+                        span.click();
+                    }
+                }
+            }
+
+            observe(){
+                const cards_element = document.getElementById('cards_wrapper');
+                const config = { attributes: true, childList: false, subtree: false };
+
+                // Callback function to execute when mutations are observed
+                const callback = (mutationList, observer) => {
+                    for (const mutation of mutationList) {
+                        if (mutation.type === 'attributes' & mutation.attributeName==="data-view") {
+                            if (mutation.target.dataset.view === View_states.Bingo){
+                                document.getElementById('bingo_wrapper').appendChild(cards_element);
+                            } else if (mutation.target.dataset.view == View_states.Cards){
+                                document.getElementById('card_editor_wrapper').appendChild(cards_element);
+                                this.update_ui();
+                            }
+                        }
+                    }
+                };
+
+                // Create an observer instance linked to the callback function
+                this.observer = new MutationObserver(callback);
+
+                // Start observing the target node for configured mutations
+                this.observer.observe(document.body, config);
+            }
+        }
+
+        bingo = new Bingo();
+
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register("sw-offline.js");
+        }
+    </script>
+
+</body>
+</html>
