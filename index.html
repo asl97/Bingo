@@ -180,10 +180,18 @@
         <h1>Card Editor</h1>
         <div>
             <div id='card_editor'>
-                <div id='clear_card_editor' class='card_button'>
-                    <svg viewBox='0 0 16 16'>
-                        <path d='M1,8 L15,8' stroke='black' fill='none'></path>
-                    </svg>
+                <div style='display:grid;'>
+                    <div id='randomize_card_editor' class='card_button'>
+                        <svg viewBox='0 0 16 16'>
+                            <path d="M1,11 L5,11 L9,5 L14,5 L10,2" stroke="black" fill="none"></path>
+                            <path d="M1,5 L5,5 L9,11 L14,11 L10,14" stroke="black" fill="none"></path>
+                        </svg>
+                    </div>
+                    <div id='clear_card_editor' class='card_button'>
+                        <svg viewBox='0 0 16 16'>
+                            <path d='M1,8 L15,8' stroke='black' fill='none'></path>
+                        </svg>
+                    </div>
                 </div>
                 <div id='active_card'></div>
                 <div id='add_card_editor' class='card_button'>
@@ -613,6 +621,21 @@
                 }
             }
 
+            randomize_active_card(){
+                let numbers = [];
+                for (let i=1; i<this.bingo.get_input_number(); i++){
+                    numbers.push(i);
+                }
+                shuffle(numbers);
+
+                let index = 0;
+                let active_card = document.getElementById('active_card');
+                for (let input of active_card.getElementsByTagName('input')){
+                        input.value = numbers[index];
+                        index++;
+                }
+            }
+
             clear_active_card(){
                 let active_card = document.getElementById('active_card');
                 for (let input of active_card.getElementsByTagName('input')){
@@ -737,6 +760,8 @@
 
                 let active_card = document.getElementById('active_card');
 
+                let random_button = document.getElementById('randomize_card_editor');
+                random_button.onclick = ()=>this.randomize_active_card();
                 let clear_button = document.getElementById("clear_card_editor");
                 clear_button.onclick = ()=>this.clear_active_card();
 
