@@ -623,7 +623,7 @@
 
             randomize_active_card(){
                 let numbers = [];
-                for (let i=1; i<this.bingo.get_input_number(); i++){
+                for (let i=1; i<=this.bingo.get_input_number(); i++){
                     numbers.push(i);
                 }
                 shuffle(numbers);
