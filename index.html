@@ -9,23 +9,26 @@
         }
         body[data-view="bingo spinner"] #bingo_wrapper,
         body[data-view="amount selector"] #amount_wrapper,
-        body[data-view="cards editor"] #card_editor_wrapper {
+        body[data-view="cards editor"] #card_editor_wrapper,
+        body[data-view="card printer"] #printer_wrapper,
+        body[data-view="card verify and loader"] #verify_and_loader_wrapper {
             display: flex;
         }
-        body[data-view="bingo spinner"] :is(#amount_wrapper,#card_editor_wrapper, .card_control),
-        body[data-view="amount selector"] :is(#bingo_wrapper, #card_editor_wrapper),
-        body[data-view="cards editor"] :is(#amount_wrapper, #bingo_wrapper) {
+
+        body[data-view="bingo spinner"] .card_control,
+        #amount_wrapper, #bingo_wrapper, #card_editor_wrapper,
+        #printer_wrapper, #verify_and_loader_wrapper {
             display: none;
         }
 
-        #amount_wrapper, #bingo_wrapper, #card_editor_wrapper {
+        #amount_wrapper, #bingo_wrapper, #card_editor_wrapper, #printer_wrapper {
             flex-direction: column;
             place-items: center;
             text-align: center;
             width: 60%;
         }
 
-        #bingo_wrapper {
+        #bingo_wrapper > #number_display {
             font-size: 5vw;
         }
 
@@ -46,12 +49,13 @@
             margin: 0;
         }
         .top {
-            display:flex;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
             position: absolute;
             top: 0;
         }
         .top span {
-            padding: 1vh;
+            padding: 0.5vw 1vw;
             border-bottom: 1px solid black;
         }
         .left {
@@ -150,13 +154,12 @@
     </style>
 
     <div class='top left'>
-        <div>
-            <span id='reset_button'>reset</span>
-            <span id='change_amount'>change amount</span>
-        </div>
-        <div>
-            <span id='spinner_button'>spinner</span>
-            <span id='cards_editor_button'>bingo card</span>
+        <span id='reset_button'>reset</span>
+        <span id='change_amount'>change amount</span>
+        <span id='spinner_button'>spinner</span>
+        <span id='cards_editor_button'>bingo card</span>
+        <span id='printer_button'>card printer</span>
+        <span id='verify_load_button'>verify/load card</span>
         </div>
     </div>
 
@@ -178,31 +181,60 @@
 
     <div id='card_editor_wrapper'>
         <h1>Card Editor</h1>
-        <div>
-            <div id='card_editor'>
-                <div style='display:grid;'>
-                    <div id='randomize_card_editor' class='card_button'>
-                        <svg viewBox='0 0 16 16'>
-                            <path d="M1,11 L5,11 L9,5 L14,5 L10,2" stroke="black" fill="none"></path>
-                            <path d="M1,5 L5,5 L9,11 L14,11 L10,14" stroke="black" fill="none"></path>
-                        </svg>
-                    </div>
-                    <div id='clear_card_editor' class='card_button'>
-                        <svg viewBox='0 0 16 16'>
-                            <path d='M1,8 L15,8' stroke='black' fill='none'></path>
-                        </svg>
-                    </div>
+        <div id='card_editor'>
+            <div style='display:grid;'>
+                <div id='randomize_card_editor' class='card_button'>
+                    <svg viewBox='0 0 16 16'>
+                        <path d="M1,11 L5,11 L9,5 L14,5 L10,2" stroke="black" fill="none"></path>
+                        <path d="M1,5 L5,5 L9,11 L14,11 L10,14" stroke="black" fill="none"></path>
+                    </svg>
                 </div>
-                <div id='active_card'></div>
-                <div id='add_card_editor' class='card_button'>
+                <div id='clear_card_editor' class='card_button'>
                     <svg viewBox='0 0 16 16'>
                         <path d='M1,8 L15,8' stroke='black' fill='none'></path>
-                        <path d='M8,1 L8,15' stroke='black' fill='none'></path>
                     </svg>
                 </div>
             </div>
+            <div id='active_card'></div>
+            <div id='add_card_editor' class='card_button'>
+                <svg viewBox='0 0 16 16'>
+                    <path d='M1,8 L15,8' stroke='black' fill='none'></path>
+                    <path d='M8,1 L8,15' stroke='black' fill='none'></path>
+                </svg>
+            </div>
         </div>
         <div id='number_selector'></div>
+    </div>
+
+    <div id='printer_wrapper'>
+        <h1>Card Printer</h1>
+        <div style='display:flex;'>
+            <div id='prev_card' class='card_button'>
+                <svg viewBox='0 0 16 16'>
+                    <path d="M14,2 L2,8 L 14,14" stroke="black" fill="none"></path>
+                </svg>
+            </div>
+            <div>
+                <div id='printer_card' style="text-align: center; display:grid; place-content:center;">
+                    <div>
+                        <label>Card id: </label><label id='card_id'></label>
+                    </div>
+                    <div id='card_viewer'></div>
+                </div>
+                <button id='print_button'>Print</button>
+            </div>
+            <div id='next_card' class='card_button'>
+                <svg viewBox='0 0 16 16'>
+                    <path d='M2,2 L14,8 L2,14' stroke='black' fill='none'></path>
+                </svg>
+            </div>
+        </div>
+    </div>
+
+    <div id='verify_and_loader_wrapper'>
+        <label>Card id:</label><input id='card loader'>
+        <div id='card_loader_viewer'></div>
+        <button id='loader_button'>Load</button>
     </div>
 
     <div id='cards_wrapper'>
@@ -234,16 +266,135 @@
                 </svg>
             </div>
         </div>
+        <div class='card_content'></div>
+        <label>Card ID: </label><label class='card_id'></label>
     </div>
+
     <dialog id='alert'>
         <p></p>
     </dialog>
 
     <script>
+        /*
+            cyrb53 (c) 2018 bryc (github.com/bryc)
+            A fast and simple hash function with decent collision resistance.
+            Largely inspired by MurmurHash2/3, but with a focus on speed/simplicity.
+            Public domain. Attribution appreciated.
+        */
+        class bryc{
+            static cyrb128(str) {
+                let h1 = 1779033703, h2 = 3144134277,
+                    h3 = 1013904242, h4 = 2773480762;
+                for (let i = 0, k; i < str.length; i++) {
+                    k = str.charCodeAt(i);
+                    h1 = h2 ^ Math.imul(h1 ^ k, 597399067);
+                    h2 = h3 ^ Math.imul(h2 ^ k, 2869860233);
+                    h3 = h4 ^ Math.imul(h3 ^ k, 951274213);
+                    h4 = h1 ^ Math.imul(h4 ^ k, 2716044179);
+                }
+                h1 = Math.imul(h3 ^ (h1 >>> 18), 597399067);
+                h2 = Math.imul(h4 ^ (h2 >>> 22), 2869860233);
+                h3 = Math.imul(h1 ^ (h3 >>> 17), 951274213);
+                h4 = Math.imul(h2 ^ (h4 >>> 19), 2716044179);
+                return [(h1^h2^h3^h4)>>>0, (h2^h1)>>>0, (h3^h1)>>>0, (h4^h1)>>>0];
+            }
+        }
+    </script>
+    <script>
+        // I, Chris Doty-Humphrey, release all of my work on PractRand to the public domain. 
+        // https://pracrand.sourceforge.net/license.txt
+        // sfc* was designed and coded by myself, and is public domain.  
+
+        // ported by bryc
+        // (c) 2018 bryc (github.com/bryc)
+        // Public domain. Attribution appreciated.
+        class PractRand{
+            static sfc32(a, b, c, d) {
+                return function() {
+                a >>>= 0; b >>>= 0; c >>>= 0; d >>>= 0; 
+                var t = (a + b) | 0;
+                a = b ^ b >>> 9;
+                b = c + (c << 3) | 0;
+                c = (c << 21 | c >>> 11);
+                d = d + 1 | 0;
+                t = t + d | 0;
+                c = c + t | 0;
+                return (t >>> 0) / 4294967296;
+                }
+            }
+        }
+    </script>
+    <script>
+        // Base on this stackoverflow answer from Rafael Lima
+        // Licensed CC BY-SA 4.0 (mentioned in share menu)
+        // https://stackoverflow.com/a/69549596/1986995
+
+        // Fixed the edge case bug
+        class base_convert{
+            static alphabet = '-0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ_abcdefghijklmnopqrstuvwxyz';
+
+            static to_radix = function(bigNum, radix=64) {
+                if(typeof bigNum != 'bigint')
+                bigNum = BigInt(bigNum);
+
+                radix = BigInt(Math.max(Math.min(radix, this.alphabet.length),0))
+
+                let result = '';
+                while (bigNum>0) {
+                    let r = bigNum % radix;
+                    result = this.alphabet[r] + result;
+                    bigNum = bigNum / radix;
+                } 
+                return result
+            }
+
+            static from_radix = function(input, radix=64) {
+                if(!input)
+                    return 0;
+
+                radix = BigInt(Math.max(Math.min(radix, this.alphabet.length),0))
+
+                var result = 0n;
+
+                for (var i = 0; i < input.length; i++)
+                    result = (result * BigInt(radix)) + BigInt(this.alphabet.indexOf(input[i]));
+
+                return result;
+            }
+        }
+    </script>
+    <script>
+        // Base on this stackoverflow answer marked community wiki
+        // Licensed CC BY-SA 4.0 (mentioned in share menu)
+        // https://stackoverflow.com/a/6274398/1986995
+        function seeded_shuffle(array, seed) {
+            let random_generator = PractRand.sfc32(...bryc.cyrb128(seed));
+            let counter = array.length;
+
+            // While there are elements in the array
+            while (counter > 0) {
+                // Pick a random index
+                let index = Math.floor(random_generator() * counter);
+
+                // Decrease counter by 1
+                counter--;
+
+                // And swap the last element with it
+                let temp = array[counter];
+                array[counter] = array[index];
+                array[index] = temp;
+            }
+
+            return array;
+        }
+    </script>
+    <script>
         const View_states = {
             Bingo: 'bingo spinner',
             Amount: 'amount selector',
-            Cards: 'cards editor'
+            Cards: 'cards editor',
+            Printer: 'card printer',
+            Verify: 'card verify and loader'
         };
         Object.freeze(View_states);
 
@@ -383,6 +534,7 @@
                 this.url = new URL(window.location.href);
                 this.cards = new Cards(this);
                 this.cards.observe();
+                this.printer = new Printer(this);
                 this.init_ui()
                 this.post_init_ui();
             }
@@ -536,6 +688,15 @@
                 document.body.dataset.view=View_states.Bingo;
             }
 
+            printer_button(){
+                this.printer.update_ui();
+                document.body.dataset.view=View_states.Printer;
+            }
+
+            verify_and_loader(){
+                document.body.dataset.view=View_states.Verify;
+            }
+
             mute(){
                 let mute_button = document.getElementById('mute_button');
                 if (!this.muted){
@@ -584,6 +745,12 @@
                 let spinner_button = document.getElementById('spinner_button');
                 spinner_button.onclick = ()=>this.bingo_spinner();
 
+                let printer_button = document.getElementById('printer_button');
+                printer_button.onclick = ()=>this.printer_button();
+
+                let verify_load_button = document.getElementById('verify_load_button');
+                verify_load_button.onclick = ()=>this.verify_and_loader();
+
                 let roll_button = document.getElementById('number_display');
                 roll_button.onclick = ()=>this.roll_instance.start_animated_roll();
             }
@@ -601,6 +768,93 @@
                 this.height = 5;
                 this.slots = this.width*this.height;
                 this.init_ui();
+            }
+
+            serializer = {
+                to_arrays: function (c){return function* _(){
+                    for (let row of c.getElementsByClassName('table_row')){
+                        yield function* (r){
+                            for (let span of r.getElementsByTagName('span')){
+                                let number = span.textContent;
+                                if (number === "*")
+                                    number = '0'
+                                yield parseInt(number);
+                            }
+                        }(row);
+                    }
+                }},
+
+                to_card_id: (card)=>{
+                    let data = '';
+                    let numbers = [];
+                    let max_number = 0;
+                    
+                    for (let row of card){
+                        for (let number of row){
+                            numbers.push(number);
+
+                            if (number > max_number)
+                                max_number = number;
+                        }
+                    }
+
+                    let digits = Math.floor(Math.log10(max_number)) + 1;
+                    for (let number of numbers){
+                        data += number.toString().padStart(digits, '0');
+                    }
+                    return base_convert.to_radix(data);
+
+                },
+
+                from_card_id: ()=>{},
+
+                compact: (card)=>{
+                    let data = 0n;
+                    let numbers = [];
+                    let max_number = 0n;
+                    for (let row of card){
+                        for (let number of row){
+                            number = BigInt(number);
+                            numbers.push(number);
+
+                            if (number > max_number)
+                                max_number = number;
+                        }
+                    }
+
+                    max_number += 1n
+                    for (let number of numbers){
+                        data = data * max_number + number;
+                    }
+
+                    return max_number.toString()+"d"+data.toString()
+                },
+
+                uncompact: (data)=>{
+                    let [max_digit, ...data_array] = data.split('d');
+                    max_digit = BigInt(max_digit);
+                    let bigNum = BigInt(data_array.join(''));
+
+                    let result = [];
+                    while (bigNum>0) {
+                        result.push(bigNum % max_digit);
+                        bigNum = bigNum / max_digit;
+                    }
+
+                    return result.reverse();
+                },
+
+            }
+
+            to_arrays_with_seed(card){
+                let card_id = card.getElementsByClassName('card_id')[0].textContent;
+                return [card_id, this.serializer.to_arrays(card.getElementsByClassName('card')[0])]
+            }
+
+            get_cards(){
+                let cards_wrapper = document.getElementById('cards_wrapper');
+                let cards = cards_wrapper.children;
+                return Array.from(cards).map(this.to_arrays_with_seed.bind(this));
             }
 
             generate_active_card(){
@@ -621,12 +875,21 @@
                 }
             }
 
-            randomize_active_card(){
+            randomize_array(seed){
                 let numbers = [];
                 for (let i=1; i<=this.bingo.get_input_number(); i++){
                     numbers.push(i);
                 }
-                shuffle(numbers);
+
+                seeded_shuffle(numbers, seed);
+                return numbers
+            }
+
+            randomize_active_card(){
+                let seed = Math.floor(Math.random()*9999).toString();
+                let numbers = this.randomize_array(seed)
+                let card_id = document.getElementById('card_id');
+                card_id.textContent = "CS-"+seed;
 
                 let index = 0;
                 let active_card = document.getElementById('active_card');
@@ -661,29 +924,25 @@
                     index++
                 }
 
-                card.parentElement.remove();
+                card.parentElement.parentElement.remove();
             }
 
-            generate_card(){
-                let active_card = document.getElementById('active_card');
+            generate_card(arr){
                 let alert = document.getElementById('alert');
-                let card_template = document.getElementById('card_template');
-
                 let card = document.createElement('div');
                 card.classList.add('card');
 
                 let index = 0;
-                let inputs = active_card.getElementsByTagName('input');
                 for (let i=0; i<this.height; i++){
                     let row = document.createElement('div');
                     row.classList.add('table_row');
                     for (let l=0; l<this.width; l++){
                         let span = document.createElement('span');
-                        let value = inputs[index].value;
-                        if (value === '' || value === '*'){
+                        let value = arr[index];
+                        if (value === '' || value === '*' || value === '0'){
                             span.textContent = '*';
                         } else if (!isNaN(parseInt(value))) {
-                            if (parseInt(value) <= 0){
+                            if (parseInt(value) < 0){
                                 alert.getElementsByTagName('p')[0].textContent = "Card editor contains a number less than 1";
                                 alert.showModal();
                                 return
@@ -707,9 +966,22 @@
                     }
                     card.appendChild(row);
                 }
+
+                return card
+            }
+
+            generate_and_add_card(){
+                let card_template = document.getElementById('card_template');
+
+                let active_card = document.getElementById('active_card');
+                let inputs = active_card.getElementsByTagName('input');
+                let arr = Array.from(inputs).map((x)=>x.value);
+                let card = this.generate_card(arr)
+
                 let card_wrapper = card_template.cloneNode(true);
                 card_wrapper.removeAttribute('id');
-                card_wrapper.appendChild(card);
+                let card_content = card_wrapper.getElementsByClassName('card_content')[0];
+                card_content.appendChild(card);
 
                 let move_left = card_wrapper.getElementsByClassName('move_card_left')[0];
                 move_left.onclick = ()=>card_wrapper.parentElement.insertBefore(card_wrapper, card_wrapper.previousSibling);
@@ -726,6 +998,25 @@
                 edit_button.onclick = ()=>this.load_card(card);
                 let delete_button = card_wrapper.getElementsByClassName('delete_card')[0];
                 delete_button.onclick = ()=>card_wrapper.remove();
+
+                // Verify seeded random number isn't edited
+                let card_id = document.getElementById('card_id');
+                if (card_id.textContent.startsWith("CS-")){
+                    let all_match = true;
+                    let ra = this.randomize_array(card_id.textContent.slice(3));
+                    for (let i=0; i<inputs.length; i++){
+                        let value = inputs[i].value;
+                        if (value === '' || value === '*' || ra[i] != parseInt(value)){
+                            all_match = false;
+                            break;
+                        }
+                    }
+
+                    if (all_match){
+                        card_wrapper.getElementsByClassName('card_id')[0].textContent = card_id.textContent;
+                    }
+
+                }
 
                 return card_wrapper;
             }
@@ -748,7 +1039,7 @@
 
             add_card(){
                 let cards = document.getElementById('cards_wrapper');
-                let card_wrapper = this.generate_card();
+                let card_wrapper = this.generate_and_add_card();
                 this.mark_rolled_number(card_wrapper);
 
                 cards.appendChild(card_wrapper);
@@ -865,6 +1156,69 @@
             }
         }
 
+        class Printer{
+            constructor(bingo){
+                this.bingo = bingo;
+                this.init_ui();
+            }
+
+            init_ui(){
+                let print_button = document.getElementById('print_button');
+                print_button.onclick = ()=>{
+                    this.print()
+                }
+                
+            }
+
+            print(){
+                var divContents = document.getElementById("printer_card").outerHTML;
+                var a = window.open('', '', 'height=500, width=500');
+                a.document.write('<html><body>'+divContents+'</body></html>');
+                a.document.close();
+                a.print();
+            }
+
+            update_ui(){
+                let cards = this.bingo.cards.get_cards();
+
+                if (cards.length === 0) {
+                    let card_viewer = document.getElementById('card_viewer');
+                    card_viewer.textContent = "No card added yet";
+                } else {
+                    this.load(cards[0]);
+                }
+            }
+
+            load(card){
+                let [card_id_str, card_content_factory] = card;
+                if (card_id_str == "")
+                    card_id_str = this.bingo.cards.serializer.to_card_id(card_content_factory());
+
+                let card_id = document.getElementById('card_id');
+                card_id.textContent = card_id_str;
+
+                let arr = [];
+                for (let row of card_content_factory())
+                    for (let number of row)
+                        arr.push(number.toString());
+
+                let card_ele = this.bingo.cards.generate_card(arr);
+                card_ele.style['font-size'] = '6vw'
+                for (let row of card_ele.children){
+                    row.style.display = 'table-row';
+                    row.style.border = '1px black solid';
+                    for (let c of row.children){
+                        c.style.display = 'table-cell';
+                        c.style.border = '1px black solid';
+                        c.style.padding = '1vw';
+                        c.style['vertical-align'] = 'middle';
+                    }
+                }
+
+                document.getElementById('card_viewer').innerHTML = card_ele.outerHTML;
+            }
+
+        }
         bingo = new Bingo();
 
         if ('serviceWorker' in navigator) {
