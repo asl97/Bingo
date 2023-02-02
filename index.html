@@ -21,7 +21,7 @@
             display: none;
         }
 
-        #amount_wrapper, #bingo_wrapper, #card_editor_wrapper {
+        #amount_wrapper, #bingo_wrapper, #card_editor_wrapper, #printer_wrapper {
             flex-direction: column;
             place-items: center;
             text-align: center;
@@ -55,7 +55,7 @@
             top: 0;
         }
         .top span {
-            padding: 1vh;
+            padding: 1vw;
             border-bottom: 1px solid black;
         }
         .left {
@@ -207,6 +207,7 @@
     </div>
 
     <div id='printer_wrapper'>
+        <h1>Card Printer</h1>
         <div style='display:flex;'>
             <div id='prev_card' class='card_button'>
                 <svg viewBox='0 0 16 16'>
@@ -214,7 +215,7 @@
                 </svg>
             </div>
             <div>
-                <div id='printer_card' style="display:flex; place-content:center;">
+                <div id='printer_card' style="text-align: center; display:grid; place-content:center;">
                     <div>
                         <label>Card id: </label><label id='card_id'></label>
                     </div>
@@ -776,7 +777,7 @@
                             for (let span of r.getElementsByTagName('span')){
                                 let number = span.textContent;
                                 if (number === "*")
-                                    number = 0
+                                    number = '0'
                                 yield parseInt(number);
                             }
                         }(row);
@@ -923,7 +924,7 @@
                     index++
                 }
 
-                card.parentElement.remove();
+                card.parentElement.parentElement.remove();
             }
 
             generate_card(arr){
@@ -938,10 +939,10 @@
                     for (let l=0; l<this.width; l++){
                         let span = document.createElement('span');
                         let value = arr[index];
-                        if (value === '' || value === '*'){
+                        if (value === '' || value === '*' || value === '0'){
                             span.textContent = '*';
                         } else if (!isNaN(parseInt(value))) {
-                            if (parseInt(value) <= 0){
+                            if (parseInt(value) < 0){
                                 alert.getElementsByTagName('p')[0].textContent = "Card editor contains a number less than 1";
                                 alert.showModal();
                                 return
@@ -1199,21 +1200,22 @@
                 let arr = [];
                 for (let row of card_content_factory())
                     for (let number of row)
-                        arr.push(number);
+                        arr.push(number.toString());
 
                 let card_ele = this.bingo.cards.generate_card(arr);
+                card_ele.style['font-size'] = '6vw'
                 for (let row of card_ele.children){
                     row.style.display = 'table-row';
-                    row.style.border='1px black solid';
+                    row.style.border = '1px black solid';
                     for (let c of row.children){
                         c.style.display = 'table-cell';
-                        c.style.border='1px black solid';
-                        c.style.padding = '0';
+                        c.style.border = '1px black solid';
+                        c.style.padding = '1vw';
                         c.style['vertical-align'] = 'middle';
                     }
-
                 }
-                document.getElementById('card_viewer').innerHTML = card_ele.innerHTML;
+
+                document.getElementById('card_viewer').innerHTML = card_ele.outerHTML;
             }
 
         }
