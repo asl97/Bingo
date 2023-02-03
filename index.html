@@ -490,11 +490,13 @@
                 }
             }
 
-            roll_element(element){
+            roll_element(element, muted){
+                if (muted === undefined)
+                    muted = this.bingo.muted
                 element.classList.add('chosen');
                 this.numbers.splice(this.numbers.indexOf(element), 1);
                 let number = element.textContent;
-                this.roll(number, this.bingo.muted);
+                this.roll(number, muted);
                 this.bingo.cards.roll(number);
             }
 
