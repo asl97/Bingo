@@ -236,7 +236,7 @@
     </div>
 
     <div id='verify_and_loader_wrapper'>
-        <label>Card id:</label><input id='card loader'>
+        <label>Card id:</label><input id='card_loader'>
         <div id='card_loader_viewer'></div>
         <button id='loader_button'>Load</button>
     </div>
@@ -541,6 +541,7 @@
                 this.cards = new Cards(this);
                 this.cards.observe();
                 this.printer = new Printer(this);
+                this.loader = new Loader(this);
                 this.init_ui()
                 this.post_init_ui();
             }
@@ -812,7 +813,18 @@
 
                 },
 
-                from_card_id: ()=>{},
+                from_card_id: (card_id)=>{
+                    alert(card_id.split(/(?:\s+)/).length);
+                    if (card_id.startsWith("CS-")){
+                        // TODO
+                    } else if (card_id.split(/(?:\s+)/).length == this.slots) {
+                        // number of numbers match expected bingo card
+                        // for support of using google len or OCR to load physical card
+                        alert(card_id);
+                    } else {
+                        //alert(card_id);
+                    }
+                },
 
                 compact: (card)=>{
                     let data = 0n;
@@ -912,7 +924,7 @@
                 }
             }
 
-            load_card(card){
+            load_card_to_editor(card){
                 let alert = document.getElementById('alert');
                 let active_card = document.getElementById('active_card');
                 let inputs = active_card.getElementsByTagName('input');
@@ -1001,7 +1013,7 @@
                     
                 };
                 let edit_button = card_wrapper.getElementsByClassName('edit_card')[0];
-                edit_button.onclick = ()=>this.load_card(card);
+                edit_button.onclick = ()=>this.load_card_to_editor(card);
                 let delete_button = card_wrapper.getElementsByClassName('delete_card')[0];
                 delete_button.onclick = ()=>card_wrapper.remove();
 
@@ -1224,6 +1236,20 @@
                 document.getElementById('card_viewer').innerHTML = card_ele.outerHTML;
             }
 
+        }
+
+        class Loader{
+            constructor(bingo){
+                this.bingo = bingo;
+                this.init_ui();
+            }
+
+            init_ui(){
+                let loader_button = document.getElementById("loader_button");
+                loader_button.onclick = ()=>{
+                    this.bingo.cards.serializer.from_card_id(document.getElementById("card_loader").value);
+                }
+            }
         }
         bingo = new Bingo();
 
