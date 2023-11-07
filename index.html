@@ -19,6 +19,7 @@
         }
 
         #amount_wrapper, #bingo_wrapper, #card_editor_wrapper {
+            touch-action: manipulation;
             flex-direction: column;
             place-items: center;
             text-align: center;
@@ -38,6 +39,7 @@
             display:table;
             width: 100%;
             font-size: 2vw;
+            touch-action: manipulation;
             border-collapse: collapse;
             border: 1px solid black;
             text-align: center;
@@ -98,6 +100,7 @@
 
         #card_editor_wrapper > #cards_wrapper,
         #bingo_wrapper > #cards_wrapper {
+            touch-action: manipulation;
             display: flex;
         }
 
@@ -126,6 +129,7 @@
         }
 
         .card {
+            touch-action: manipulation;
             border: black solid;
             margin: 1vw;
             height: 18vw;
