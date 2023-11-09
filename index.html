@@ -1191,6 +1191,16 @@
                 var divContents = document.getElementById("printer_card").outerHTML;
                 var a = window.open('', '', 'height=500, width=500');
                 a.document.write('<html><body>'+divContents+'</body></html>');
+                let card = a.document.getElementById('card_viewer').children[0];
+                card.style.width = '98vw'
+                card.style.height = '98vh'
+                card.style.display='table';
+                card.style['table-layout'] = 'fixed'
+                
+                let card_id = a.document.getElementById('card_id').parentElement
+                card_id.style.position = 'absolute';
+                card_id.style.top = '1vh';
+                card_id.style.left = '2vw';
                 a.document.close();
                 a.print();
             }
