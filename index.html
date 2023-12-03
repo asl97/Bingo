@@ -151,7 +151,7 @@
             margin: 0 0.2vw;
         }
 
-        #card_template {
+        #card_template, #svg_card_template {
             display: none;
         }
     </style>
@@ -272,6 +272,16 @@
         <div class='card_content'></div>
         <label>Card ID: </label><label class='card_id'></label>
     </div>
+
+    <svg viewBox="0 0 252 252" id='svg_card_template' xmlns="http://www.w3.org/2000/svg">
+        <g transform="translate(1, 1)">
+            <path id='grid_rows' fill="none" stroke="black" stroke-linecap="square"></path>
+            <path id='grid_columns' fill="none" stroke="black" stroke-linecap="square"></path>
+
+            <text id='grid_number' dominant-baseline="middle" text-anchor="middle"></text>
+            <g id='grid_numbers'></g>
+        </g>
+    </svg>
 
     <dialog id='alert'>
         <p></p>
@@ -985,6 +995,40 @@
                 }
 
                 return card
+            }
+
+            generate_svg(arr){
+                let card_svg = document.getElementById('svg_card_template');
+                let copy = card_svg.cloneNode(true);
+                copy.removeAttribute('id');
+
+                let rows = copy.getElementById('grid_rows');
+                rows.setAttribute('d', "M 250 -50 " + "m -250 50 l 250 0".repeat(6));
+                rows.removeAttribute('id');
+
+                let columns = copy.getElementById('grid_columns');
+                columns.setAttribute('d', "M -50 250 " + "m 50 -250 l 0 250".repeat(6));
+                columns.removeAttribute('id');
+
+                let number_grid = copy.getElementById('grid_numbers');
+                number_grid.removeAttribute('id');
+
+                let number = copy.getElementById('grid_number');
+                number.removeAttribute('id');
+
+                let i = 0
+                for (let row = 0; row < 5; row++){
+                    for (let column = 0; column < 5; column++){
+                        let number_copy = number.cloneNode();
+                        number_copy.setAttribute('x', column * 50 + 25);
+                        number_copy.setAttribute('y', row * 50 + 25);
+                        number_copy.textContent = arr[i];
+                        number_grid.appendChild(number_copy);
+                        i+=1
+                    }
+                }
+
+                return copy
             }
 
             generate_and_add_card(){
