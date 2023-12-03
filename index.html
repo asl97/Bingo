@@ -906,7 +906,7 @@
                 let seed = Math.floor(Math.random()*9999).toString();
                 let numbers = this.randomize_array(seed)
                 let card_id = document.getElementById('card_id');
-                card_id.textContent = "CS-"+seed;
+                card_id.textContent = "CS"+this.bingo.get_input_number()+"-"+seed;
 
                 let index = 0;
                 let active_card = document.getElementById('active_card');
@@ -1018,9 +1018,10 @@
 
                 // Verify seeded random number isn't edited
                 let card_id = document.getElementById('card_id');
-                if (card_id.textContent.startsWith("CS-")){
+                let card_id_regex = /CS\d+-(\d+)/
+                if (card_id_regex.test(card_id.textContent)){
                     let all_match = true;
-                    let ra = this.randomize_array(card_id.textContent.slice(3));
+                    let ra = this.randomize_array(card_id.textContent.match(card_id_regex)[1]);
                     for (let i=0; i<inputs.length; i++){
                         let value = inputs[i].value;
                         if (value === '' || value === '*' || ra[i] != parseInt(value)){
