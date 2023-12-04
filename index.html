@@ -902,6 +902,31 @@
                 }
             }
 
+            get_winning_combination_2d(arr){
+                // TODO: look into supporting any sized card
+                // replace 5 with height/width of card
+                let winning = Array(12).fill().map(() => []);
+
+                arr.map((number, i) => {
+                    // rows
+                    winning[Math.floor(i/5)].push(number)
+                    // columns
+                    winning[5+(i % 5)].push(number)
+                    // diagonal
+                    let n = i + 1
+                    // if (n in [1, 7, 13, 19, 25])
+                    if (((n - Math.ceil(n/5)) % 5) == 0){
+                        winning[10].push(number)
+                    }
+                    // if (n in [5, 9, 13, 17, 21])
+                    if (((n + Math.ceil(n/5-1)) % 5) == 0){
+                        winning[11].push(number)
+                    }
+                })
+
+                return winning
+            }
+
             randomize_array(seed){
                 let numbers = [];
                 for (let i=1; i<=this.bingo.get_input_number(); i++){
