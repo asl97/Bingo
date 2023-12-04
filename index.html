@@ -928,9 +928,10 @@
                 return winning
             }
 
-            randomize_array(seed){
+            randomize_array(seed, input_numbers){
+                input_numbers = input_numbers || this.bingo.get_input_number();
                 let numbers = [];
-                for (let i=1; i<=this.bingo.get_input_number(); i++){
+                for (let i=1; i<= input_numbers; i++){
                     numbers.push(i);
                 }
 
