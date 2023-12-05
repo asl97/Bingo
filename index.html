@@ -11,17 +11,20 @@
         body[data-view="amount selector"] #amount_wrapper,
         body[data-view="cards editor"] #card_editor_wrapper,
         body[data-view="card printer"] #printer_wrapper,
-        body[data-view="card verify and loader"] #verify_and_loader_wrapper {
+        body[data-view="card verify and loader"] #verify_and_loader_wrapper,
+        body[data-view="batch card printer"] #batch_printer_wrapper {
             display: flex;
         }
 
         body[data-view="bingo spinner"] .card_control,
         #amount_wrapper, #bingo_wrapper, #card_editor_wrapper,
-        #printer_wrapper, #verify_and_loader_wrapper {
+        #printer_wrapper, #verify_and_loader_wrapper, #batch_printer_wrapper{
             display: none;
         }
 
-        #amount_wrapper, #bingo_wrapper, #card_editor_wrapper, #printer_wrapper {
+        #amount_wrapper, #bingo_wrapper, #card_editor_wrapper, #printer_wrapper,
+        #batch_printer_wrapper {
+            touch-action: manipulation;
             flex-direction: column;
             place-items: center;
             text-align: center;
@@ -163,6 +166,7 @@
         <span id='cards_editor_button'>bingo card</span>
         <span id='printer_button'>card printer</span>
         <span id='verify_load_button'>verify/load card</span>
+        <span id='batch_printer_button'>batch printer</span>
         </div>
     </div>
 
@@ -239,6 +243,14 @@
         <label>Card id:</label><input id='card_loader'>
         <div id='card_loader_viewer'></div>
         <button id='loader_button'>Load</button>
+    </div>
+
+    <div id='batch_printer_wrapper'>
+        <h1>Batch Card Printer</h1>
+        <div>
+            <label>Amount of cards:</label><input type="number" id='batch_amount'>
+            <button id='batch_button'>Print</button>
+        </div>
     </div>
 
     <div id='cards_wrapper'>
@@ -409,7 +421,8 @@
             Amount: 'amount selector',
             Cards: 'cards editor',
             Printer: 'card printer',
-            Verify: 'card verify and loader'
+            Verify: 'card verify and loader',
+            Batch: 'batch card printer'
         };
         Object.freeze(View_states);
 
@@ -715,6 +728,10 @@
                 document.body.dataset.view=View_states.Verify;
             }
 
+            batch_printer_button(){
+                document.body.dataset.view=View_states.Batch;
+            }
+
             mute(){
                 let mute_button = document.getElementById('mute_button');
                 if (!this.muted){
@@ -769,6 +786,9 @@
                 let verify_load_button = document.getElementById('verify_load_button');
                 verify_load_button.onclick = ()=>this.verify_and_loader();
 
+                let batch_printer_button = document.getElementById('batch_printer_button');
+                batch_printer_button.onclick = ()=>this.batch_printer_button();
+
                 let roll_button = document.getElementById('number_display');
                 roll_button.onclick = ()=>this.roll_instance.start_animated_roll();
             }
@@ -799,8 +819,8 @@
                                 yield parseInt(number);
                             }
                         }(row);
-                    }
-                }},
+                    };
+                }()},
 
                 to_card_id: (card)=>{
                     let data = '';
@@ -904,6 +924,27 @@
                 }
             }
 
+            arr_2d_to_3d(arr, length){
+                let arr_3d = Array(length).fill().map(()=>[]);
+                arr.forEach((x,i)=>arr_3d[i%length].push(x))
+
+                return arr_3d
+            }
+
+            arr_3d_to_2d(arr){
+                if (arr.flat){
+                    return arr.flat();
+                }
+
+                let out = [];
+                for (let row of arr){
+                    for (let item of row){
+                        out.push(item);
+                    }
+                }
+                return out;
+            }
+
             get_winning_combination_2d(arr){
                 // TODO: look into supporting any sized card
                 // replace 5 with height/width of card
@@ -940,11 +981,18 @@
                 return numbers
             }
 
-            randomize_active_card(){
+            randomize_card(){
                 let seed = Math.floor(Math.random()*9999).toString();
-                let numbers = this.randomize_array(seed)
-                let card_id = document.getElementById('card_id');
-                card_id.textContent = "CS"+this.bingo.get_input_number()+"-"+seed;
+                let amount = this.bingo.get_input_number();
+                let numbers = this.randomize_array(seed, amount);
+                let card_id = "CS"+amount+"-"+seed;
+
+                return {numbers, card_id}
+            }
+            randomize_active_card(){
+                let {numbers, card_id} = this.randomize_card();
+                let card_id_element = document.getElementById('card_id');
+                card_id_element.textContent = card_id;
 
                 let index = 0;
                 let active_card = document.getElementById('active_card');
@@ -1247,6 +1295,35 @@
                 this.init_ui();
             }
 
+            Batcher = class Batcher{
+                constructor(bingo){
+                    this.bingo = bingo;
+                    this.global_winning = new Set();
+                }
+
+                generate(amount){
+                    return Array(amount).fill().map(()=>this.bingo.cards.randomize_card());
+                }
+
+                generate_unique_winners(amount){
+                    let count = 0;
+                    let number_length = Math.floor(Math.log10(this.bingo.get_input_number())) + 1;
+                    let selected = [];
+                    while (count < amount){
+                        let {numbers, card_id} = this.bingo.cards.randomize_card();
+                        let winning = this.bingo.cards.get_winning_combination_2d(numbers.slice(0,25));
+                        let serialized = winning.map((w)=>w.toSorted().map((x)=>x.toString().padStart(number_length,'0')).join(''));
+                        if (serialized.every((x)=>!this.global_winning.has(x))){
+                            serialized.forEach((x)=>this.global_winning.add(x));
+                            selected.push({numbers, card_id});
+                            count += 1;
+                        }
+                    }
+                    this.global_winning.clear();
+                    return selected
+                }
+            }
+
             init_ui(){
                 let print_button = document.getElementById('print_button');
                 print_button.onclick = ()=>{
@@ -1256,7 +1333,40 @@
                 svg_button.onclick = ()=>{
                     this.svg();
                 }
+                let batch_button = document.getElementById('batch_button');
+                batch_button.onclick = ()=>{
+                    this.batch();
+                }
                 
+            }
+
+            batch(){
+                let batcher = new this.Batcher(this.bingo);
+                let cards = batcher.generate_unique_winners(parseInt(document.getElementById('batch_amount').value));
+                let batch_cards = [];
+                for (let card of cards){
+                    let {numbers, card_id} = card;
+                    this.load([card_id, this.bingo.cards.arr_2d_to_3d(numbers.slice(0,25), 5)]);
+                    let printer_card = document.getElementById("printer_card").cloneNode(true);
+                    let card_div = printer_card.children[1].children[0];
+                    card_div.style.width = '98vw';
+                    card_div.style.height = '98vh';
+                    card_div.style.display='table';
+                    card_div.style['table-layout'] = 'fixed';
+
+                    let card_id_element = printer_card.children[0];
+                    card_id_element.style.position = 'relative';
+                    card_id_element.style['text-align'] = 'start';
+                    card_id_element.style['font-size'] = '2vw';
+                    card_id_element.style.height = '0';
+                    card_id_element.style.top = '1vh';
+                    card_id_element.style.left = '2vw';
+                    batch_cards.push(printer_card.outerHTML);
+                }
+                var a = window.open('', '', 'height=500, width=500');
+                a.document.write('<html><body>'+batch_cards.join('<div style="break-after:page"></div>')+'</body></html>');
+                a.document.close();
+                a.print();
             }
 
             print(){
@@ -1316,7 +1426,7 @@
                 card_id.textContent = card_id_str;
 
                 let arr = [];
-                for (let row of card_content_factory())
+                for (let row of card_content_factory)
                     for (let number of row)
                         arr.push(number.toString());
 
