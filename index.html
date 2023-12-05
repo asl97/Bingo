@@ -1306,14 +1306,12 @@
                 generate(amount){
                     // let us at least guarantee each card is unique
                     // return Array(amount).fill().map(()=>this.bingo.cards.randomize_card());
-                    let count = 0;
                     let selected = [];
-                    while (count < amount){
+                    while (selected.length < amount){
                         let {numbers, card_id} = this.bingo.cards.randomize_card();
                         if (!this.global_winning.has(card_id)){
                             this.global_winning.add(card_id);
                             selected.push({numbers, card_id});
-                            count += 1;
                         }
                     }
                     this.global_winning.clear();
@@ -1321,17 +1319,15 @@
                 }
 
                 generate_unique_winners(amount){
-                    let count = 0;
                     let number_length = Math.floor(Math.log10(this.bingo.get_input_number())) + 1;
                     let selected = [];
-                    while (count < amount){
+                    while (selected.length < amount){
                         let {numbers, card_id} = this.bingo.cards.randomize_card();
                         let winning = this.bingo.cards.get_winning_combination_2d(numbers.slice(0,25));
                         let serialized = winning.map((w)=>w.toSorted().map((x)=>x.toString().padStart(number_length,'0')).join(''));
                         if (serialized.every((x)=>!this.global_winning.has(x))){
                             serialized.forEach((x)=>this.global_winning.add(x));
                             selected.push({numbers, card_id});
-                            count += 1;
                         }
                     }
                     this.global_winning.clear();
