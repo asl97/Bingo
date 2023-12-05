@@ -249,8 +249,10 @@
         <h1>Batch Card Printer</h1>
         <div>
             <label>Amount of cards:</label><input type="number" id='batch_amount'>
-            <button id='batch_button'>Print</button>
         </div>
+        <label>Print cards set:</label>
+        <button id='unique_batch_button'>Unique Winners</button>
+        <button id='random_batch_button'>Random (chance of multiple winners)</button>
     </div>
 
     <div id='cards_wrapper'>
@@ -1302,7 +1304,20 @@
                 }
 
                 generate(amount){
-                    return Array(amount).fill().map(()=>this.bingo.cards.randomize_card());
+                    // let us at least guarantee each card is unique
+                    // return Array(amount).fill().map(()=>this.bingo.cards.randomize_card());
+                    let count = 0;
+                    let selected = [];
+                    while (count < amount){
+                        let {numbers, card_id} = this.bingo.cards.randomize_card();
+                        if (!this.global_winning.has(card_id)){
+                            this.global_winning.add(card_id);
+                            selected.push({numbers, card_id});
+                            count += 1;
+                        }
+                    }
+                    this.global_winning.clear();
+                    return selected
                 }
 
                 generate_unique_winners(amount){
@@ -1333,16 +1348,30 @@
                 svg_button.onclick = ()=>{
                     this.svg();
                 }
-                let batch_button = document.getElementById('batch_button');
-                batch_button.onclick = ()=>{
-                    this.batch();
+                let random_batch_button = document.getElementById('random_batch_button');
+                random_batch_button.onclick = ()=>{
+                    this.random_batch();
+                }
+                let unique_batch_button = document.getElementById('unique_batch_button');
+                unique_batch_button.onclick = ()=>{
+                    this.unique_batch();
                 }
                 
             }
 
-            batch(){
+            random_batch(){
+                let batcher = new this.Batcher(this.bingo);
+                let cards = batcher.generate(parseInt(document.getElementById('batch_amount').value));
+                this.print_batch(cards);
+            }
+
+            unique_batch(){
                 let batcher = new this.Batcher(this.bingo);
                 let cards = batcher.generate_unique_winners(parseInt(document.getElementById('batch_amount').value));
+                this.print_batch(cards);
+            }
+
+            print_batch(cards){
                 let batch_cards = [];
                 for (let card of cards){
                     let {numbers, card_id} = card;
