@@ -224,6 +224,7 @@
                     </div>
                     <div id='card_viewer'></div>
                 </div>
+                <button id='svg_button'>Svg</button>
                 <button id='print_button'>Print</button>
             </div>
             <div id='next_card' class='card_button'>
@@ -278,6 +279,7 @@
             <path id='grid_rows' fill="none" stroke="black" stroke-linecap="square"></path>
             <path id='grid_columns' fill="none" stroke="black" stroke-linecap="square"></path>
 
+            <text id='svg_card_id' dominant-baseline="hanging" text-anchor="start" x="2" y="2" style="font-size: 5px;"></text>
             <text id='grid_number' dominant-baseline="middle" text-anchor="middle"></text>
             <g id='grid_numbers'></g>
         </g>
@@ -1026,21 +1028,16 @@
             generate_svg(arr){
                 let card_svg = document.getElementById('svg_card_template');
                 let copy = card_svg.cloneNode(true);
-                copy.removeAttribute('id');
 
                 let rows = copy.getElementById('grid_rows');
                 rows.setAttribute('d', "M 250 -50 " + "m -250 50 l 250 0".repeat(6));
-                rows.removeAttribute('id');
 
                 let columns = copy.getElementById('grid_columns');
                 columns.setAttribute('d', "M -50 250 " + "m 50 -250 l 0 250".repeat(6));
-                columns.removeAttribute('id');
 
                 let number_grid = copy.getElementById('grid_numbers');
-                number_grid.removeAttribute('id');
 
                 let number = copy.getElementById('grid_number');
-                number.removeAttribute('id');
 
                 let i = 0
                 for (let row = 0; row < 5; row++){
@@ -1253,7 +1250,11 @@
             init_ui(){
                 let print_button = document.getElementById('print_button');
                 print_button.onclick = ()=>{
-                    this.print()
+                    this.print();
+                }
+                let svg_button = document.getElementById('svg_button');
+                svg_button.onclick = ()=>{
+                    this.svg();
                 }
                 
             }
@@ -1274,6 +1275,25 @@
                 card_id.style.left = '2vw';
                 a.document.close();
                 a.print();
+            }
+
+            svg(){
+                let printer_card = document.getElementById('printer_card');
+                let card_id = document.getElementById('card_id').textContent;
+                let arr = Array(...printer_card.getElementsByTagName('span')).map((x)=>x.textContent);
+                let svg = this.bingo.cards.generate_svg(arr);
+                svg.getElementById('svg_card_id').textContent = card_id;
+                const as_text = new XMLSerializer().serializeToString(svg);
+                // store in a Blob
+                const blob = new Blob([as_text], { type: "image/svg+xml" });
+                // create an URI pointing to that blob
+                const url = URL.createObjectURL(blob);
+                let a = document.createElement('a');
+                a.href = url;
+                a.download = card_id + '.svg';
+                a.click();
+                // so the Garbage Collector can collect the blob
+                URL.revokeObjectURL(url);
             }
 
             update_ui(){
