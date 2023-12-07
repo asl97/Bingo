@@ -1665,6 +1665,26 @@
                     this.code128.c[c] = p;
                 }
             }
+
+            patternToWidth(pattern){
+                return pattern.match(/(.)\1*/g).map((x)=>x.length).join(' ')
+            }
+
+            charToWidth(cha, codeset){
+                if (codeset == undefined){
+                    cha = cha.toUpperCase();
+                    codeset = this.code39;
+                }
+
+                if (cha in codeset === false){
+                    throw new Error(`character '${cha}' not in selected codeset!`);
+                }
+                return this.patternToWidth(codeset[cha])
+            }
+
+            textToWidth(text, codeset){
+                return text.split('').map((x)=>this.charToWidth(x, codeset)).join(' ');
+            }
         }
 
         class Loader{
