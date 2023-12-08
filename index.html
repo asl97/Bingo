@@ -154,7 +154,7 @@
             margin: 0 0.2vw;
         }
 
-        #card_template, #svg_card_template {
+        #card_template, #svg_card_template, #svg_barcode_template {
             display: none;
         }
     </style>
@@ -297,6 +297,10 @@
             <text id='grid_number' dominant-baseline="middle" text-anchor="middle"></text>
             <g id='grid_numbers'></g>
         </g>
+    </svg>
+
+    <svg viewBox="0 0 320 100" id='svg_barcode_template' width="320" height="100" stroke="black" stroke-width="1" shape-rendering="crispEdges" xmlns="http://www.w3.org/2000/svg" version="1.1" style="margin: max(1vw, 1vh);">
+        <line stroke-dasharray="" x1="0" y1=".5" x2="0" y2=".5" transform="matrix(1 0 0 100 0 0)"></line>
     </svg>
 
     <dialog id='alert'>
@@ -1722,6 +1726,17 @@
                 let s = this.patternToWidth('1001011011010');
                 return [s, this.textToWidth(text, this.code39), s].join(' ')
             }
+
+            dashArrayToSVG(dasharray){
+                let len = dasharray.split(' ').reduce((p,x)=>p+parseInt(x),0);
+
+                let svg = document.getElementById('svg_barcode_template').cloneNode(true);
+                svg.removeAttribute('id');
+                let line = svg.children[0];
+                line.setAttribute('x2', len);
+                line.setAttribute('transform',`matrix(${320/len} 0 0 100 0 0)`);
+                line.setAttribute('stroke-dasharray', dasharray);
+                return svg
             }
         }
 
