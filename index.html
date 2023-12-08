@@ -1697,7 +1697,7 @@
                 if (cha in codeset === false){
                     throw new Error(`character '${cha}' not in selected codeset!`);
                 }
-                return this.patternToWidth(codeset[cha])
+                return this.patternToWidth(codeset[cha]);
             }
 
             textToWidth(text, codeset){
