@@ -253,6 +253,10 @@
         <label>Print cards set:</label>
         <button id='unique_batch_button'>Unique Winners</button>
         <button id='random_batch_button'>Random (chance of multiple winners)</button>
+        <label>Options:</label>
+        <div>
+            <label>print with barcode: </label><input id="Batch_Option_Barcode" type="checkbox"></input>
+        </div>
     </div>
 
     <div id='cards_wrapper'>
@@ -1350,11 +1354,13 @@
                 }
                 let random_batch_button = document.getElementById('random_batch_button');
                 random_batch_button.onclick = ()=>{
-                    this.random_batch();
+                    let barcode = document.getElementById('Batch_Option_Barcode');
+                    barcode.checked ? this.random_batch_with_barcode() : this.random_batch();
                 }
                 let unique_batch_button = document.getElementById('unique_batch_button');
                 unique_batch_button.onclick = ()=>{
-                    this.unique_batch();
+                    let barcode = document.getElementById('Batch_Option_Barcode');
+                    barcode.checked ? this.unique_batch_with_barcode() : this.unique_batch();
                 }
                 
             }
