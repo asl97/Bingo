@@ -299,7 +299,7 @@
         </g>
     </svg>
 
-    <svg viewBox="0 0 320 100" id='svg_barcode_template' stroke="black" stroke-width="1" shape-rendering="crispEdges" xmlns="http://www.w3.org/2000/svg" version="1.1" style="margin: max(1vw, 1vh);">
+    <svg viewBox="0 0 320 100" id='svg_barcode_template' stroke="black" stroke-width="1" shape-rendering="crispEdges" xmlns="http://www.w3.org/2000/svg" version="1.1" style="margin: max(1vw, 1vh) max(1vw, 1vh) 0;">
         <line stroke-dasharray="" x1="0" y1=".5" x2="0" y2=".5" transform="matrix(1 0 0 100 0 0)"></line>
     </svg>
 
@@ -1371,6 +1371,18 @@
                 this.print_batch(cards);
             }
 
+            random_batch_with_barcode(){
+                let batcher = new this.Batcher(this.bingo);
+                let cards = batcher.generate(parseInt(document.getElementById('batch_amount').value));
+                this.print_batch_with_barcode(cards);
+            }
+
+            unique_batch_with_barcode(){
+                let batcher = new this.Batcher(this.bingo);
+                let cards = batcher.generate_unique_winners(parseInt(document.getElementById('batch_amount').value));
+                this.print_batch_with_barcode(cards);
+            }
+
             print_batch(cards){
                 let batch_cards = [];
                 for (let card of cards){
@@ -1390,6 +1402,49 @@
                     card_id_element.style.height = '0';
                     card_id_element.style.top = '1vh';
                     card_id_element.style.left = '2vw';
+                    batch_cards.push(printer_card.outerHTML);
+                }
+                var a = window.open('', '', 'height=500, width=500');
+                a.document.write('<html><body>'+batch_cards.join('<div style="break-after:page"></div>')+'</body></html>');
+                a.document.close();
+                a.print();
+            }
+
+            print_batch_with_barcode(cards){
+                let batch_cards = [];
+                for (let card of cards){
+                    let {numbers, card_id} = card;
+                    this.load([card_id, this.bingo.cards.arr_2d_to_3d(numbers.slice(0,25), 5)]);
+                    let printer_card = document.getElementById("printer_card").cloneNode(true);
+                    printer_card.style.display = "flex";
+                    printer_card.style['place-content'] = "";
+
+                    let card_div = printer_card.children[1].children[0];
+                    card_div.style.width = '80vw';
+                    card_div.style.height = '98vh';
+                    card_div.style.display='table';
+                    card_div.style['table-layout'] = 'fixed';
+
+                    let div = document.createElement('div');
+                    div.style.position = 'relative';
+                    div.style.width = '0';
+                    div.style.height = '0';
+                    div.style.top = '98vh';
+                    div.style.rotate = '-90deg';
+
+                    let bcode = new Barcode();
+                    let svg = bcode.dashArrayToSVG(bcode.textToCode128B(card_id));
+                    svg.setAttribute('viewBox', '0 0 320 50');
+                    svg.style.width = '94vh';
+                    div.appendChild(svg);
+
+                    let card_id_element = printer_card.children[0];
+                    card_id_element.style['font-size'] = '12vh';
+                    card_id_element.style.width = '97vh';
+                    card_id_element.remove();
+                    div.appendChild(card_id_element);
+
+                    printer_card.appendChild(div);
                     batch_cards.push(printer_card.outerHTML);
                 }
                 var a = window.open('', '', 'height=500, width=500');
