@@ -1524,7 +1524,10 @@
             code128 = {
                 "a": {},
                 "b": {},
-                "c": {}
+                "c": {},
+                // for reversing the pattern to it's value/index and back
+                "p_i": {},
+                "i_p": {}
             }
 
             code128_raw = [
@@ -1658,12 +1661,14 @@
             ]
 
             constructor(){
-                for (let set of this.code128_raw){
+                this.code128_raw.forEach((set, i)=>{
                     let [[a,b,c], p] = set;
                     this.code128.a[a] = p;
                     this.code128.b[b] = p;
                     this.code128.c[c] = p;
-                }
+                    this.code128.p_i[p] = i;
+                    this.code128.i_p[i] = p;
+                })
             }
 
             patternToWidth(pattern){
@@ -1684,6 +1689,22 @@
 
             textToWidth(text, codeset){
                 return text.split('').map((x)=>this.charToWidth(x, codeset)).join(' ');
+            }
+
+            textToCode128B(text){
+                if (!/[\x20-\x7F\xC8-\xCF]/.test(text)){
+                    throw new Error(`text '${text}' is not encodable to code128b`);
+                }
+
+                // start with 104, the start code of 128b
+                let check_total = text.split("").reduce((p, x, i)=>p+this.code128.p_i[this.code128.b[x]]*(i+1), 104);
+
+                return [this.patternToWidth(this.code128.b[104]),
+                this.textToWidth(text, this.code128.b),
+                this.patternToWidth(this.code128.i_p[check_total%103]),
+                this.patternToWidth(this.code128.b[108])].join(' ')
+            }
+
             }
         }
 
