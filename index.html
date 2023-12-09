@@ -936,9 +936,20 @@
 
             arr_2d_to_3d(arr, length){
                 let arr_3d = Array(length).fill().map(()=>[]);
+                arr.forEach((x,i)=>arr_3d[Math.floor(i/length)].push(x))
+
+                return arr_3d
+            }
+
+            arr_2d_to_3d_flipped(arr, length){
+                let arr_3d = Array(length).fill().map(()=>[]);
                 arr.forEach((x,i)=>arr_3d[i%length].push(x))
 
                 return arr_3d
+            }
+
+            arr_2d_flip(arr, length){
+                return this.arr_3d_to_2d(this.arr_2d_to_3d_flipped(arr, length));
             }
 
             arr_3d_to_2d(arr){
