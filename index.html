@@ -1355,6 +1355,7 @@
             constructor(bingo){
                 this.bingo = bingo;
                 this.init_ui();
+                this.index = 0;
             }
 
             Batcher = class Batcher{
@@ -1395,7 +1396,13 @@
                 }
             }
 
+
             init_ui(){
+                let prev_card = document.getElementById('prev_card');
+                prev_card.onclick = ()=>{this.swap_card(this.index-1)}
+                let next_card = document.getElementById('next_card');
+                next_card.onclick = ()=>{this.swap_card(this.index+1)}
+
                 let print_button = document.getElementById('print_button');
                 print_button.onclick = ()=>{
                     let print_with_barcode = document.getElementById('Print_Option_Barcode');
@@ -1431,7 +1438,15 @@
                     let barcode = document.getElementById('Batch_Option_Barcode');
                     barcode.checked ? this.unique_batch_with_barcode() : this.unique_batch();
                 }
-                
+            }
+
+            swap_card(index){
+                let cards = this.bingo.cards.get_cards();
+                if (index < 0){return}
+                if (index >= cards.length){return}
+
+                this.index = index;
+                this.load(cards[index]);
             }
 
             random_batch(){
@@ -1572,6 +1587,7 @@
                     let card_viewer = document.getElementById('card_viewer');
                     card_viewer.textContent = "No card added yet";
                 } else {
+                    this.index = 0;
                     this.load(cards[0]);
                 }
             }
