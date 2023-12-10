@@ -1915,6 +1915,7 @@
 
                 let loader_card = document.getElementById('loader_card');
                 loader_card.innerHTML = card.outerHTML;
+                loader_card.onclick = ()=>{document.body.dataset.view=View_states.Bingo}
             }
 
             init_ui(){
