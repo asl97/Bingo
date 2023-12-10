@@ -756,6 +756,9 @@
 
             verify_and_loader(){
                 document.body.dataset.view=View_states.Verify;
+                let loader_card = document.getElementById('loader_card');
+                loader_card.innerHTML = "";
+                stop_barcode_scanner();
             }
 
             batch_printer_button(){
