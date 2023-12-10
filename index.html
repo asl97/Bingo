@@ -221,15 +221,20 @@
                     <path d="M14,2 L2,8 L 14,14" stroke="black" fill="none"></path>
                 </svg>
             </div>
-            <div>
+            <div style="display: grid;">
                 <div id='printer_card' style="text-align: center; display:grid; place-content:center;">
                     <div>
                         <label>Card id: </label><label id='card_id'></label>
                     </div>
                     <div id='card_viewer'></div>
                 </div>
-                <button id='svg_button'>Svg</button>
-                <button id='print_button'>Print</button>
+                <div>
+                    <button id='svg_button'>Svg</button>
+                    <button id='print_button'>Print</button>
+                </div>
+                <div>
+                    <label>print with barcode: </label><input id="Print_Option_Barcode" type="checkbox"></input>
+                </div>
             </div>
             <div id='next_card' class='card_button'>
                 <svg viewBox='0 0 16 16'>
@@ -852,14 +857,14 @@
                             }
                         }(row);
                     };
-                }()},
+                }},
 
                 to_card_id: (card)=>{
                     let data = '';
                     let numbers = [];
                     let max_number = 0;
                     
-                    for (let row of card){
+                    for (let row of card()){
                         for (let number of row){
                             numbers.push(number);
 
@@ -994,6 +999,12 @@
                     }
                 }
                 return out;
+            }
+
+            generator(arr){
+                return function*(){
+                    yield* arr
+                }
             }
 
             get_winning_combination_2d(arr){
@@ -1387,7 +1398,24 @@
             init_ui(){
                 let print_button = document.getElementById('print_button');
                 print_button.onclick = ()=>{
-                    this.print();
+                    let print_with_barcode = document.getElementById('Print_Option_Barcode');
+                    if (print_with_barcode.checked){
+                        let card_id = document.getElementById('card_id').textContent;
+                        if (this.bingo.cards.serializer.formats.every(([format_regex, func])=>{
+                            let result = !format_regex.test(card_id);
+                            format_regex.lastIndex = 0;
+                            return result;
+                        })){
+                            let alert = document.getElementById('alert');
+                            alert.getElementsByTagName('p')[0].textContent = "Printing with barcode is only support with automatically generated cards";
+                            alert.showModal()
+                            return
+                        }
+                        let numbers = this.bingo.cards.serializer.from_card_id(card_id);
+                        this.print_batch_with_barcode([{numbers, card_id}]);
+                    } else {
+                        this.print();
+                    }
                 }
                 let svg_button = document.getElementById('svg_button');
                 svg_button.onclick = ()=>{
@@ -1434,7 +1462,7 @@
                 let batch_cards = [];
                 for (let card of cards){
                     let {numbers, card_id} = card;
-                    this.load([card_id, this.bingo.cards.arr_2d_to_3d(numbers.slice(0,25), 5)]);
+                    this.load([card_id, this.bingo.cards.generator(this.bingo.cards.arr_2d_to_3d(numbers.slice(0,25), 5))]);
                     let printer_card = document.getElementById("printer_card").cloneNode(true);
                     let card_div = printer_card.children[1].children[0];
                     card_div.style.width = '98vw';
@@ -1461,7 +1489,7 @@
                 let batch_cards = [];
                 for (let card of cards){
                     let {numbers, card_id} = card;
-                    this.load([card_id, this.bingo.cards.arr_2d_to_3d(numbers.slice(0,25), 5)]);
+                    this.load([card_id, this.bingo.cards.generator(this.bingo.cards.arr_2d_to_3d(numbers.slice(0,25), 5))]);
                     let printer_card = document.getElementById("printer_card").cloneNode(true);
                     printer_card.style.display = "flex";
                     printer_card.style['place-content'] = "";
@@ -1551,13 +1579,13 @@
             load(card){
                 let [card_id_str, card_content_factory] = card;
                 if (card_id_str == "")
-                    card_id_str = this.bingo.cards.serializer.to_card_id(card_content_factory());
+                    card_id_str = this.bingo.cards.serializer.to_card_id(card_content_factory);
 
                 let card_id = document.getElementById('card_id');
                 card_id.textContent = card_id_str;
 
                 let arr = [];
-                for (let row of card_content_factory)
+                for (let row of card_content_factory())
                     for (let number of row)
                         arr.push(number.toString());
 
