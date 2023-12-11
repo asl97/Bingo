@@ -18,8 +18,13 @@
 
         body[data-view="bingo spinner"] .card_control,
         #amount_wrapper, #bingo_wrapper, #card_editor_wrapper,
-        #printer_wrapper, #verify_and_loader_wrapper, #batch_printer_wrapper{
+        #printer_wrapper, #verify_and_loader_wrapper, 
+        #batch_printer_wrapper, #quick_input_div {
             display: none;
+        }
+
+        body[data-view="bingo spinner"] #quick_input_div {
+            display: block;
         }
 
         #amount_wrapper, #bingo_wrapper, #card_editor_wrapper, #printer_wrapper,
@@ -54,11 +59,11 @@
         }
         .top {
             display: grid;
-            grid-template-columns: 1fr 1fr;
+            /* grid-template-columns: 1fr 1fr; */
             position: absolute;
             top: 0;
         }
-        .top span {
+        .top > * {
             padding: 0.5vw 1vw;
             border-bottom: 1px solid black;
         }
@@ -66,7 +71,7 @@
             left: 0;
             flex-direction: column;
         }
-        .left span {
+        .left > * {
             border-right: 1px solid black;
         }
         .left > * {
@@ -75,7 +80,7 @@
         .right {
             right: 0;
         }
-        .right > span {
+        .right > * {
             border-left: 1px solid black;
         }
         .table_row {
@@ -173,6 +178,7 @@
     <div class='top right'>
         <span id='mute_button'>mute</span>
         <span id='fullscreen'>fullscreen</span>
+        <div id="quick_input_div"><span>quick input:</span><input type="numeric" id="quick_input" style="width: 2vw;"></div>
     </div>
 
     <div id='amount_wrapper'>
@@ -1281,6 +1287,21 @@
 
                 let add_button = document.getElementById('add_card_editor');
                 add_button.onclick = ()=>this.add_card();
+
+                let quick_input = document.getElementById('quick_input');
+                quick_input.addEventListener("keypress", (event) => {
+                    if (event.key === "Enter") {
+                        event.preventDefault();
+                        let spinner = document.getElementById('content');
+                        let spans = spinner.getElementsByTagName('span');
+                        let value = quick_input.value;
+                        // always clear input even when input has error
+                        // it's easier to retype 2-3 digit than to fix the input
+                        quick_input.value = "";
+                        Array(...spans).find((x)=>(x.textContent==parseInt(value))).click();
+                    }
+                })
+
             }
 
             update_ui(){
