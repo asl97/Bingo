@@ -834,6 +834,26 @@
 
                 let roll_button = document.getElementById('number_display');
                 roll_button.onclick = ()=>this.roll_instance.start_animated_roll();
+
+                let spinner_quick_input = document.getElementById('spinner_quick_input');
+                spinner_quick_input.addEventListener("keypress", (event) => {
+                    if (event.key === "Enter") {
+                        event.preventDefault();
+                        let spinner = document.getElementById('content');
+                        let spans = spinner.getElementsByTagName('span');
+                        let value = spinner_quick_input.value;
+                        // always clear input even when input has error
+                        // it's easier to retype 2-3 digit than to fix the input
+                        spinner_quick_input.value = "";
+                        Array(...spans).find((x)=>(x.textContent==parseInt(value))).click();
+                    }
+                })
+
+                let spinner_text_size = document.getElementById('spinner_text_size');
+                spinner_text_size.onchange = (e)=>{
+                    let number_display = document.getElementById('number_display');
+                    number_display.style['font-size'] = e.target.value+"vw"
+                }
             }
 
             post_init_ui(){
@@ -1288,27 +1308,6 @@
 
                 let add_button = document.getElementById('add_card_editor');
                 add_button.onclick = ()=>this.add_card();
-
-                let spinner_quick_input = document.getElementById('spinner_quick_input');
-                spinner_quick_input.addEventListener("keypress", (event) => {
-                    if (event.key === "Enter") {
-                        event.preventDefault();
-                        let spinner = document.getElementById('content');
-                        let spans = spinner.getElementsByTagName('span');
-                        let value = spinner_quick_input.value;
-                        // always clear input even when input has error
-                        // it's easier to retype 2-3 digit than to fix the input
-                        spinner_quick_input.value = "";
-                        Array(...spans).find((x)=>(x.textContent==parseInt(value))).click();
-                    }
-                })
-
-                let spinner_text_size = document.getElementById('spinner_text_size');
-                spinner_text_size.onchange = (e)=>{
-                    let number_display = document.getElementById('number_display');
-                    number_display.style['font-size'] = e.target.value+"vw"
-                }
-
             }
 
             update_ui(){
