@@ -857,7 +857,7 @@
                         //     groups, it should overflow into group b
                         let groups = Array(6).fill().map(()=>[]);
                         let group_range = Math.floor(arr.length/5);
-                        arr.forEach((num, i)=>groups[Math.floor(num/group_range)].push(num))
+                        arr.forEach((num, i)=>groups[Math.floor((num-1)/group_range)].push(num))
                         // excess numbers to be distributed
                         groups[5].forEach((num, i)=>groups[i].push(num))
                         delete groups[5]
