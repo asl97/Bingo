@@ -275,6 +275,9 @@
         <button id='random_batch_button'>Random (chance of multiple winners)</button>
         <label>Options:</label>
         <div>
+            <label>group numbers into 5 group (classic bingo): </label><input id="Batch_Option_Classic" type="checkbox"></input>
+        </div>
+        <div>
             <label>print with barcode: </label><input id="Batch_Option_Barcode" type="checkbox" checked ></input>
         </div>
     </div>
@@ -1498,11 +1501,26 @@
                 this.print_batch_with_barcode(cards);
             }
 
+            batch_prep_card(card){
+                let {numbers, card_id} = card;
+                let classic = document.getElementById("Batch_Option_Classic").checked;
+                let arr;
+                if (classic){
+                    let groups = this.bingo.cards.arr_group(numbers, 5);
+                    arr = this.bingo.cards.arr_2d_to_3d_flipped(groups.map((x)=>x.slice(0,5)).flat(), 5)
+                    card_id = card_id.replace('CS','CSB');
+                } else {
+                    arr = this.bingo.cards.arr_2d_to_3d(numbers.slice(0,25), 5);
+                }
+
+                this.load([card_id, this.bingo.cards.generator(arr)]);
+            }
+
             print_batch(cards){
                 let batch_cards = [];
                 for (let card of cards){
-                    let {numbers, card_id} = card;
-                    this.load([card_id, this.bingo.cards.generator(this.bingo.cards.arr_2d_to_3d(numbers.slice(0,25), 5))]);
+                    this.batch_prep_card(card);
+
                     let printer_card = document.getElementById("printer_card").cloneNode(true);
                     let card_div = printer_card.children[1].children[0];
                     card_div.style.width = '98vw';
@@ -1529,7 +1547,8 @@
                 let batch_cards = [];
                 for (let card of cards){
                     let {numbers, card_id} = card;
-                    this.load([card_id, this.bingo.cards.generator(this.bingo.cards.arr_2d_to_3d(numbers.slice(0,25), 5))]);
+                    this.batch_prep_card(card);
+
                     let printer_card = document.getElementById("printer_card").cloneNode(true);
                     printer_card.style.display = "flex";
                     printer_card.style['place-content'] = "";
