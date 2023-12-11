@@ -849,18 +849,8 @@
                     }],
                     [/^csb(\d+)-(\d+)$/gi, (match=>{
                         let arr = this.randomize_array(match[2], parseInt(match[1]));
-                        // an extra array for number that exceed the grouping length
-                        // grouping length is gotten by dividing the total number by 5
-                        // and dropping the remainder.
-                        //
-                        // eg: in normal bingo 76 would be outside of the b i n g o
-                        //     groups, it should overflow into group b
-                        let groups = Array(6).fill().map(()=>[]);
-                        let group_range = Math.floor(arr.length/5);
-                        arr.forEach((num, i)=>groups[Math.floor((num-1)/group_range)].push(num))
-                        // excess numbers to be distributed
-                        groups[5].forEach((num, i)=>groups[i].push(num))
-                        delete groups[5]
+                        let groups = this.arr_group(arr, 5);
+
                         return this.arr_2d_flip(groups.map((x)=>x.slice(0,5)).flat(), 5)
                     })]
                 ],
@@ -1018,6 +1008,22 @@
                     }
                 }
                 return out;
+            }
+
+            arr_group(arr, number_of_group){
+                // an extra array for number that exceed the grouping length
+                // grouping length is gotten by dividing the total number by 5
+                // and dropping the remainder.
+                //
+                // eg: in normal bingo 76 would be outside of the b i n g o
+                //     groups, it should overflow into group b
+                let groups = Array(number_of_group+1).fill().map(()=>[]);
+                let group_range = Math.floor(arr.length/5);
+                arr.forEach((num, i)=>groups[Math.floor((num-1)/group_range)].push(num));
+                // excess numbers to be distributed
+                groups[number_of_group].forEach((num, i)=>groups[i].push(num));
+
+                return groups.slice(0,number_of_group);
             }
 
             generator(arr){
