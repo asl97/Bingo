@@ -180,6 +180,7 @@
         <span id='fullscreen'>fullscreen</span>
         <div class='spinner_items'><span>quick input:</span><input type="numeric" id="spinner_quick_input" style="width: 2vw;"></div>
         <div class='spinner_items'><span>num size:</span><input type="number" id="spinner_text_size" value="5" style="width: 3vw;"></div>
+        <div class='spinner_items'><span>classic bingo:</span><input type="checkbox" id="spinner_classic_bingo" checked></div>
     </div>
 
     <div id='amount_wrapper'>
@@ -691,8 +692,9 @@
                 }
             }
 
-            generate_numbers_display(numbers){
-                let content = document.getElementById('content')
+            display_ten_column(){
+                let numbers = this.get_input_number();
+                let content = document.getElementById('content');
                 content.innerHTML = '';
                 let number = 0 ;
                 let number_elements = [];
@@ -723,6 +725,54 @@
                 return number_elements;
             }
 
+            display_bingo_rows(){
+                let numbers = this.get_input_number();
+                let content = document.getElementById('content');
+                content.innerHTML = '';
+                let number_elements = [];
+                let number_length = Math.floor(Math.log10(numbers)) + 1;
+
+                let number_group = this.cards.arr_group(Array.from({length:numbers},(v,k)=>k+1), 5)
+
+                number_group.forEach((number_row, i)=>{
+                    let row = document.createElement('div');
+                    row.classList.add('table_row');
+
+                    let bingo_letter_span = document.createElement('span');
+                    bingo_letter_span.textContent = 'BINGO'[i];
+                    row.appendChild(bingo_letter_span);
+
+                    row.classList.add('table_row');
+                    for (let number of number_row){
+                        let span = document.createElement('span');
+                        span.textContent = number.toString().padStart(number_length, '0');
+                        span.classList.add('table_cell');
+                        span.onclick = ()=>{
+                            if (span.classList.contains("chosen")){
+                                this.roll_instance.unroll_element(span);
+                            } else {
+                                this.roll_instance.roll_element(span);
+                            }
+                        };
+                        row.appendChild(span);
+                        number_elements.push(span);
+                    }
+                    content.appendChild(row);
+                })
+
+                return number_elements;
+            }
+
+            generate_numbers_display(){
+                // replace true with checkbox.checked
+                let spinner_classic_bingo = document.getElementById('spinner_classic_bingo');
+                if (!spinner_classic_bingo.checked){
+                    return this.display_ten_column();
+                } else {
+                    return this.display_bingo_rows();
+                }
+            }
+
             get_input_number(){
                 let res = "";
                 for (let input of this.inputs){
@@ -739,7 +789,7 @@
             start(){
                 this.update_url();
                 this.cards.reset();
-                let number_elements = this.generate_numbers_display(this.get_input_number());
+                let number_elements = this.generate_numbers_display();
                 this.roll_instance = new Roll(this, number_elements);
                 document.body.dataset.view=View_states.Bingo;
                 let number_display = document.getElementById('number_display');
@@ -852,7 +902,12 @@
                 let spinner_text_size = document.getElementById('spinner_text_size');
                 spinner_text_size.onchange = (e)=>{
                     let number_display = document.getElementById('number_display');
-                    number_display.style['font-size'] = e.target.value+"vw"
+                    number_display.style['font-size'] = e.target.value+"vw";
+                }
+
+                let spinner_classic_bingo = document.getElementById('spinner_classic_bingo');
+                spinner_classic_bingo.onchange = (e)=>{
+                    this.generate_numbers_display();
                 }
             }
 
