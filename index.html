@@ -288,6 +288,9 @@
             <label>group numbers into 5 group (classic bingo): </label><input id="Batch_Option_Classic" type="checkbox"></input>
         </div>
         <div>
+            <label>include letters grouping (classic only): </label><input id="Batch_Option_Letters" type="checkbox" disabled></input>
+        </div>
+        <div>
             <label>print with barcode: </label><input id="Batch_Option_Barcode" type="checkbox" checked ></input>
         </div>
     </div>
@@ -1572,6 +1575,11 @@
                     let barcode = document.getElementById('Batch_Option_Barcode');
                     barcode.checked ? this.unique_batch_with_barcode() : this.unique_batch();
                 }
+                let Batch_Option_Classic = document.getElementById('Batch_Option_Classic');
+                let Batch_Option_Letters = document.getElementById('Batch_Option_Letters');
+                Batch_Option_Classic.onchange = (e)=>{
+                    Batch_Option_Letters.disabled = !Batch_Option_Classic.checked
+                }
             }
 
             swap_card(index){
@@ -1622,12 +1630,34 @@
                 this.load([card_id, this.bingo.cards.generator(arr)]);
             }
 
+            batch_post_prep_card(printer_card){
+                let letters = document.getElementById("Batch_Option_Letters").checked;
+                let classic = document.getElementById("Batch_Option_Classic").checked;
+                if (letters && classic){
+                    let spans = printer_card.getElementsByTagName('span');
+                    Array.from("BINGO").forEach((letter, i)=>{
+                        spans[i].dataset.group = letter;
+                    })
+                    let range = document.createRange();
+                    let frag = range.createContextualFragment(`
+                        <style>
+                            .table_row > span::before {
+                                content: attr(data-group);
+                                font-size: 2vw;
+                                display: block;
+                                line-height: 0;
+                            }
+                        </style>`)
+                    printer_card.appendChild(frag);
+                }
+            }
             print_batch(cards){
                 let batch_cards = [];
                 for (let card of cards){
                     this.batch_prep_card(card);
 
                     let printer_card = document.getElementById("printer_card").cloneNode(true);
+                    this.batch_post_prep_card(printer_card);
                     let card_div = printer_card.children[1].children[0];
                     card_div.style.width = '98vw';
                     card_div.style.height = '98vh';
@@ -1656,6 +1686,7 @@
                     this.batch_prep_card(card);
 
                     let printer_card = document.getElementById("printer_card").cloneNode(true);
+                    this.batch_post_prep_card(printer_card);
                     printer_card.style.display = "flex";
                     printer_card.style['place-content'] = "";
 
