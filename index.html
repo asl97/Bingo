@@ -788,6 +788,7 @@
             }
 
             get_number_grouping(number){
+                number = number - 1;
                 let grouping = Math.floor(this.get_input_number()/5);
                 let max_grouping = grouping*5
                 let index = number > max_grouping ? number-max_grouping : Math.floor(number/grouping)
