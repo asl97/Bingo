@@ -181,6 +181,8 @@
         <div class='spinner_items'><span>quick input:</span><input type="numeric" id="spinner_quick_input" style="width: 2vw;"></div>
         <div class='spinner_items'><span>num size:</span><input type="number" id="spinner_text_size" value="5" style="width: 3vw;"></div>
         <div class='spinner_items'><span>classic bingo:</span><input type="checkbox" id="spinner_classic_bingo" checked></div>
+        <div class='spinner_items'><span>customize TTS:</span><input type="checkbox" id="spinner_show_tts_customizer"></div>
+        <div class='spinner_items' style='display:none;' id="spinner_tts_customizer"><input id="spinner_tts_regex" value="$1$2$3 $1 $2 $3"></div>
     </div>
 
     <div id='amount_wrapper'>
@@ -504,7 +506,11 @@
             }
 
             queue(text){
-                this._queue.unshift(text);
+                let spinner_tts_regex = document.getElementById("spinner_tts_regex");
+                let processed = text.replace(/(\d)(\d?)(\d?)([BINGO]?)/, spinner_tts_regex.value);
+                for (let part of processed.split(' ').filter((x)=>x!=='')){
+                    this._queue.unshift(part.replaceAll('-', ' '));
+                }
                 this.speak();
             }
 
@@ -552,10 +558,10 @@
                 number_display.textContent = number;
 
                 if (!muted) {
-                    number = parseInt(number).toString();
-                    for (let text of [number, ...number]){
-                        speechqueue.queue(text);
-                    }
+                    let string_number = parseInt(number).toString();
+                    let letter = this.bingo.get_number_grouping(number);
+                    let text = string_number + letter;
+                    speechqueue.queue(text);
                 }
             }
 
@@ -781,6 +787,13 @@
                 return parseInt(res);
             }
 
+            get_number_grouping(number){
+                let grouping = Math.floor(this.get_input_number()/5);
+                let max_grouping = grouping*5
+                let index = number > max_grouping ? number-max_grouping : Math.floor(number/grouping)
+                return "BINGO"[index]
+            }
+
             update_url(){
                 this.url.searchParams.set("amount", this.get_input_number());
                 window.history.replaceState('', '', this.url.href);
@@ -908,6 +921,16 @@
                 let spinner_classic_bingo = document.getElementById('spinner_classic_bingo');
                 spinner_classic_bingo.onchange = (e)=>{
                     this.generate_numbers_display();
+                }
+
+                let spinner_show_tts_customizer = document.getElementById('spinner_show_tts_customizer');
+                let spinner_tts_customizer = document.getElementById('spinner_tts_customizer');
+                spinner_show_tts_customizer.onchange = (e)=>{
+                    if (spinner_show_tts_customizer.checked){
+                        spinner_tts_customizer.style.display="block";
+                    } else {
+                        spinner_tts_customizer.style.display="none";
+                    }
                 }
             }
 
