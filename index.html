@@ -293,6 +293,12 @@
         <div>
             <label>print with barcode: </label><input id="Batch_Option_Barcode" type="checkbox" checked ></input>
         </div>
+        <div>
+            <label>alt printing mode (mostly for issue on mobile): </label><input id="Batch_Option_Fixed_Size" type="checkbox" checked ></input>
+        </div>
+        <div>
+            <label>smaller card id (for issue on mobile): </label><input id="Batch_Option_Small_Card_ID" type="checkbox" ></input>
+        </div>
     </div>
 
     <div id='cards_wrapper'>
@@ -1556,7 +1562,7 @@
                             return
                         }
                         let numbers = this.bingo.cards.serializer.from_card_id(card_id);
-                        this.print_batch_with_barcode([{numbers, card_id}]);
+                        this.print_batch([{numbers, card_id}], true);
                     } else {
                         this.print();
                     }
@@ -1580,6 +1586,15 @@
                 Batch_Option_Classic.onchange = (e)=>{
                     Batch_Option_Letters.disabled = !Batch_Option_Classic.checked
                 }
+
+                let Batch_Option_Small_Card_ID = document.getElementById('Batch_Option_Small_Card_ID');
+                Batch_Option_Small_Card_ID.checked = screen.width < screen.height;
+                let Batch_Option_Barcode = document.getElementById('Batch_Option_Barcode');
+                Batch_Option_Barcode.onchange = (e)=>{
+                    Batch_Option_Small_Card_ID.disabled = !Batch_Option_Barcode.checked;
+                }
+
+
             }
 
             swap_card(index){
@@ -1606,13 +1621,13 @@
             random_batch_with_barcode(){
                 let batcher = new this.Batcher(this.bingo);
                 let cards = batcher.generate(parseInt(document.getElementById('batch_amount').value));
-                this.print_batch_with_barcode(cards);
+                this.print_batch(cards, true);
             }
 
             unique_batch_with_barcode(){
                 let batcher = new this.Batcher(this.bingo);
                 let cards = batcher.generate_unique_winners(parseInt(document.getElementById('batch_amount').value));
-                this.print_batch_with_barcode(cards);
+                this.print_batch(cards, true);
             }
 
             batch_prep_card(card){
@@ -1630,36 +1645,63 @@
                 this.load([card_id, this.bingo.cards.generator(arr)]);
             }
 
-            batch_post_prep_card(printer_card){
+            batch_head_style(){
+                let head = document.createElement('head');
+
                 let letters = document.getElementById("Batch_Option_Letters").checked;
                 let classic = document.getElementById("Batch_Option_Classic").checked;
+                let fixed_size = document.getElementById("Batch_Option_Fixed_Size").checked;
+                let fontsize = fixed_size ? '25px' : '2vw';
                 if (letters && classic){
-                    let spans = printer_card.getElementsByTagName('span');
-                    Array.from("BINGO").forEach((letter, i)=>{
-                        spans[i].dataset.group = letter;
-                    })
                     let range = document.createRange();
                     let frag = range.createContextualFragment(`
                         <style>
                             .table_row > span::before {
                                 content: attr(data-group);
-                                font-size: 2vw;
+                                font-size: `+fontsize+`;
                                 display: block;
                                 line-height: 0;
                             }
-                        </style>`)
-                    printer_card.appendChild(frag);
+                        </style>`);
+                    head.appendChild(frag);
                 }
+
+                let range = document.createRange();
+                let print_frag = range.createContextualFragment(`
+                        <style>
+                            .printer_card {
+                                break-inside: 'avoid';
+                                page-break-after: always;
+                            }
+                        </style>`);
+
+                head.appendChild(print_frag);
+
+                return head.outerHTML
             }
-            print_batch(cards){
+
+            print_batch(cards, barcode=false){
+                let fixed_size = document.getElementById("Batch_Option_Fixed_Size").checked;
+                let classic = document.getElementById("Batch_Option_Classic").checked;
+                let small_id = document.getElementById("Batch_Option_Small_Card_ID").checked;
+
                 let batch_cards = [];
                 for (let card of cards){
+                    let {numbers, card_id} = card;
                     this.batch_prep_card(card);
 
                     let printer_card = document.getElementById("printer_card").cloneNode(true);
-                    this.batch_post_prep_card(printer_card);
+                    printer_card.classList.add("printer_card");
+                    printer_card.removeAttribute('id');
+
+                    let spans = printer_card.getElementsByTagName('span');
+                    Array.from("BINGO").forEach((letter, i)=>{
+                        spans[i].dataset.group = letter;
+                    })
+
                     let card_div = printer_card.children[1].children[0];
-                    card_div.style.width = '98vw';
+                    card_div.style['font-size'] = 'min(10vh, 6vw)';
+                    card_div.style.width = '100vw';
                     card_div.style.height = '98vh';
                     card_div.style.display='table';
                     card_div.style['table-layout'] = 'fixed';
@@ -1669,57 +1711,60 @@
                     card_id_element.style['text-align'] = 'start';
                     card_id_element.style['font-size'] = '2vw';
                     card_id_element.style.height = '0';
-                    card_id_element.style.top = '1vh';
-                    card_id_element.style.left = '2vw';
-                    batch_cards.push(printer_card.outerHTML);
-                }
-                var a = window.open('', '', 'height=500, width=500');
-                a.document.write('<html><body>'+batch_cards.join('<div style="break-after:page"></div>')+'</body></html>');
-                a.document.close();
-                a.print();
-            }
+                    card_id_element.style.left = '1vw';
 
-            print_batch_with_barcode(cards){
-                let batch_cards = [];
-                for (let card of cards){
-                    let {numbers, card_id} = card;
-                    this.batch_prep_card(card);
-
-                    let printer_card = document.getElementById("printer_card").cloneNode(true);
-                    this.batch_post_prep_card(printer_card);
-                    printer_card.style.display = "flex";
+                    printer_card.style.display = "";
                     printer_card.style['place-content'] = "";
+                    if (fixed_size){
+                        card_id_element.style.left = '5mm';
+                        card_id_element.style['font-size'] = '20px';
+                        card_div.style['font-size'] = '70px';
+                        card_div.style.width = '287mm';
+                        card_div.style.height = '200mm';
+                    }
+                    if (barcode){
+                        printer_card.style.display = "flex";
+                        card_div.style.width = '80vw';
 
-                    let card_div = printer_card.children[1].children[0];
-                    card_div.style.width = '80vw';
-                    card_div.style.height = '98vh';
-                    card_div.style.display='table';
-                    card_div.style['table-layout'] = 'fixed';
+                        let div = document.createElement('div');
+                        div.style.position = 'relative';
+                        div.style.width = '0';
+                        div.style.height = '0';
+                        div.style.top = '97vh';
+                        div.style.rotate = '-90deg';
 
-                    let div = document.createElement('div');
-                    div.style.position = 'relative';
-                    div.style.width = '0';
-                    div.style.height = '0';
-                    div.style.top = '98vh';
-                    div.style.rotate = '-90deg';
+                        let bcode = new Barcode();
+                        let svg = bcode.dashArrayToSVG(bcode.textToCode128B(card_id));
+                        svg.setAttribute('viewBox', '0 0 320 50');
+                        svg.style.width = '94vh';
+                        div.appendChild(svg);
 
-                    let bcode = new Barcode();
-                    let svg = bcode.dashArrayToSVG(bcode.textToCode128B(card_id));
-                    svg.setAttribute('viewBox', '0 0 320 50');
-                    svg.style.width = '94vh';
-                    div.appendChild(svg);
+                        let card_id_element = printer_card.children[0];
+                        card_id_element.style['font-size'] = '11vh';
+                        card_id_element.style.width = '98vh';
+                        card_id_element.remove();
+                        div.appendChild(card_id_element);
+                        if (fixed_size){
+                            div.style.top = '200mm';
+                            svg.style.margin = '5mm 5mm 0';
+                            svg.style.width = '190mm';
+                            if (small_id){
+                                card_id_element.style['font-size'] = classic ? '74px': '80px';
+                            } else {
+                                card_id_element.style['font-size'] = classic ? '78px': '84px';
+                            }
 
-                    let card_id_element = printer_card.children[0];
-                    card_id_element.style['font-size'] = '11vh';
-                    card_id_element.style.width = '97vh';
-                    card_id_element.remove();
-                    div.appendChild(card_id_element);
-
-                    printer_card.appendChild(div);
+                            card_id_element.style.width = '190mm';
+                            card_id_element.style.top = '0mm';
+                            card_div.style.width = '240mm';
+                        }
+                        printer_card.appendChild(div);
+                    }
                     batch_cards.push(printer_card.outerHTML);
                 }
+                let head = this.batch_head_style();
                 var a = window.open('', '', 'height=500, width=500');
-                a.document.write('<html><body>'+batch_cards.join('<div style="break-after:page"></div>')+'</body></html>');
+                a.document.write('<html>'+head+'<body>'+batch_cards.join('')+'</body></html>');
                 a.document.close();
                 a.print();
             }
@@ -1787,7 +1832,6 @@
                         arr.push(number.toString());
 
                 let card_ele = this.bingo.cards.generate_card(arr);
-                card_ele.style['font-size'] = '6vw'
                 for (let row of card_ele.children){
                     row.style.display = 'table-row';
                     row.style.border = '1px black solid';
