@@ -33,15 +33,13 @@ jobs:
         with:
           ref: master
       - name: Checkout Dev Branch
-        uses: actions/checkout@v3
-        with:
-          path: branch/dev
-          ref: dev
+        run: | 
+          git fetch --depth=1 origin dev
+          git worktree add branch/dev dev
       - name: Checkout 2019 bingo as a branch
-        uses: actions/checkout@v3
-        with:
-          path: branch/2019
-          ref: 7f4e4e83d8c11f05f77870a6223783d104bdc77e
+        run: |
+          git fetch --depth=1 origin 7f4e4e83d8c11f05f77870a6223783d104bdc77e
+          git worktree add branch/2019 7f4e4e83d8c11f05f77870a6223783d104bdc77e
       - name: Setup Pages
         uses: actions/configure-pages@v2
       - name: Upload artifact
