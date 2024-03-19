@@ -1,6 +1,7 @@
 Bingo Spinner Thingy
 ----
 
+![New Bingo Spinner Layout](https://github.com/asl97/Bingo-Spinner/raw/screenshots/screenshot4.png)
 ![Bingo Spinner](https://github.com/asl97/Bingo-Spinner/raw/screenshots/screenshot3.png)
 ![Amount Selector](https://github.com/asl97/Bingo-Spinner/raw/screenshots/screenshot1.png)
 ![Card Editor](https://github.com/asl97/Bingo-Spinner/raw/screenshots/screenshot2.png)
