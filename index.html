@@ -1129,19 +1129,23 @@
             }
 
             arr_group(arr, number_of_group){
-                // an extra array for number that exceed the grouping length
-                // grouping length is gotten by dividing the total number by 5
-                // and dropping the remainder.
+                // Grouping the numbers into group of numbers_of_group
+                // Used for grouping into B,I,N,G,O.
                 //
                 // eg: in normal bingo 76 would be outside of the b i n g o
                 //     groups, it should overflow into group b
-                let groups = Array(number_of_group+1).fill().map(()=>[]);
+                let groups = Array(number_of_group).fill().map(()=>[]);
                 let group_range = Math.floor(arr.length/5);
-                arr.forEach((num, i)=>groups[Math.floor((num-1)/group_range)].push(num));
-                // excess numbers to be distributed
-                groups[number_of_group].forEach((num, i)=>groups[i].push(num));
+                for (let i=0; i<5; i++){
+                    for (let l=0; l < group_range; l++){
+                        groups[i].push(arr[l+i*group_range])
+                    }
+                }
+                for (let i=group_range*5; i<arr.length; i++){
+                    groups[i%5].push(arr[i])
+                }
 
-                return groups.slice(0,number_of_group);
+                return groups;
             }
 
             generator(arr){
