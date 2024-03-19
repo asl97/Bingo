@@ -551,17 +551,39 @@
             constructor(bingo, number_elements){
                 this.bingo = bingo;
                 this.end_roll_time;
-                shuffle(number_elements);
-                this.numbers = number_elements;
+                this.sort_elements(number_elements);
+                this.indexs = number_elements;
+                this.rindexs = [...number_elements.keys()];
+                shuffle(this.rindexs);
                 this.spinning = false;
             }
 
+            sort_elements(number_elements){
+                return number_elements.sort((a,b)=>a.textContent.localeCompare(b.textContent))
+            }
+
+            replace_elements(number_elements){
+                this.sort_elements(number_elements);
+                if (this.indexs.length != number_elements.length){
+                    console.log('[WARNING] new number element length does not match');
+                }
+                for (let i=0; i<this.indexs.length; i++){
+                    if (this.indexs[i].textContent != number_elements[i].textContent){
+                        console.log('[WARNING] element content does not match', this.indexs[i].textContent, number_elements[i].textContent);
+                    }
+                    if (this.rindexs.indexOf(i) == -1){
+                        number_elements[i].classList.add('chosen');
+                    }
+                }
+
+                this.indexs = number_elements;
+            }
             unroll_element(element){
                 element.classList.remove("chosen");
                 let number = element.textContent;
                 this.bingo.cards.unroll(number);
-                this.numbers.push(element);
-                shuffle(this.numbers);
+                this.rindexs.push(this.indexs.indexOf(element));
+                shuffle(this.rindexs);
             }
 
             roll(number, muted){
@@ -580,26 +602,26 @@
                 if (muted === undefined)
                     muted = this.bingo.muted
                 element.classList.add('chosen');
-                this.numbers.splice(this.numbers.indexOf(element), 1);
+                this.rindexs.splice(this.rindexs.indexOf(this.indexs.indexOf(element)), 1);
                 let number = element.textContent;
                 this.roll(number, muted);
                 this.bingo.cards.roll(number);
             }
 
             animated_roll(){
-                if (!this.numbers.length){
+                if (!this.rindexs.length){
                     this.spinning = false;
                     return
                 }
 
                 let number;
                 if (performance.now() < this.end_roll_time){
-                    let index = Math.floor(Math.random() * this.numbers.length);
-                    number = this.numbers[index].textContent;
+                    let index = Math.floor(Math.random() * this.rindexs.length);
+                    number = this.indexs[this.rindexs[index]].textContent;
                     this.roll(number, true);
                     requestAnimationFrame(()=>this.animated_roll());
                 } else {
-                    let element = this.numbers[0];
+                    let element = this.indexs[this.rindexs[0]];
                     this.spinning = false;
                     this.roll_element(element);
                 }
@@ -609,7 +631,7 @@
             start_animated_roll(){
                 if (this.spinning) return
                 this.spinning = true;
-                if (this.numbers.length > 1) this.end_roll_time = performance.now()+1500;
+                if (this.rindexs.length > 1) this.end_roll_time = performance.now()+1500;
                 this.animated_roll();
             }
         }
@@ -932,7 +954,8 @@
 
                 let spinner_classic_bingo = document.getElementById('spinner_classic_bingo');
                 spinner_classic_bingo.onchange = (e)=>{
-                    this.generate_numbers_display();
+                    let number_elements = this.generate_numbers_display();
+                    this.roll_instance.replace_elements(number_elements);
                 }
 
                 let spinner_show_tts_customizer = document.getElementById('spinner_show_tts_customizer');
