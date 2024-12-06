@@ -1,0 +1,6 @@
+// get the up arrow svg element
+let temp1 = document.getElementById('amount_input').children[0].children[2]
+// click on the svg element and click start
+let task = setInterval(()=>{temp1.onclick(); bingo.start()},20)
+// stop the test loop:
+// clearInterval(task)
