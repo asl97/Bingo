@@ -992,6 +992,12 @@
                     }],
                     [/^csb(\d+)-(\d+)$/gi, (match=>{
                         let arr = this.randomize_array(match[2], parseInt(match[1]));
+                        let groups = this.arr_group_for_CSB(arr, 5);
+
+                        return this.arr_2d_flip(groups.map((x)=>x.slice(0,5)).flat(), 5)
+                    })],
+                    [/^csc(\d+)-(\d+)$/gi, (match=>{
+                        let arr = this.randomize_array(match[2], parseInt(match[1]));
                         let groups = this.arr_group(arr, 5);
 
                         return this.arr_2d_flip(groups.map((x)=>x.slice(0,5)).flat(), 5)
@@ -1153,7 +1159,7 @@
                 return out;
             }
 
-            arr_group(arr, number_of_group){
+            arr_group_for_CSB(arr, number_of_group){
                 // Grouping the numbers into group of numbers_of_group
                 // Used for grouping into B,I,N,G,O.
                 //
@@ -1168,6 +1174,27 @@
                 }
                 for (let i=group_range*5; i<arr.length; i++){
                     groups[i%5].push(arr[i])
+                }
+
+                return groups;
+            }
+
+            arr_group(arr, number_of_group){
+                // Grouping the numbers into group of numbers_of_group
+                // Used for grouping into B,I,N,G,O.
+                //
+                // eg: in normal bingo 76 would be outside of the b i n g o
+                //     groups, it should overflow into group b
+                let groups = Array(number_of_group).fill().map(()=>[]);
+                let group_range = Math.floor(arr.length/number_of_group);
+                let number_range = number_of_group * group_range;
+                for (let i=0; i<arr.length; i++){
+                    let num = arr[i];
+                    if (num > number_range){
+                        groups[(num-1)%5].push(num)
+                    } else {
+                        groups[Math.floor((num-1)/group_range)].push(num);
+                    }
                 }
 
                 return groups;
@@ -1666,7 +1693,7 @@
                 if (classic){
                     let groups = this.bingo.cards.arr_group(numbers, 5);
                     arr = this.bingo.cards.arr_2d_to_3d_flipped(groups.map((x)=>x.slice(0,5)).flat(), 5)
-                    card_id = card_id.replace('CS','CSB');
+                    card_id = card_id.replace('CS','CSC');
                 } else {
                     arr = this.bingo.cards.arr_2d_to_3d(numbers.slice(0,25), 5);
                 }
